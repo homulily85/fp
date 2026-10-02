@@ -107,6 +107,7 @@ def worker(connection, path, firefighters, config, started, deadline):
                 solver_instance=solver,
                 initial_horizon_factor=config.get("initial_horizon_factor", 1.5),
                 horizon_growth_factor=config.get("horizon_growth_factor", 2.0),
+                cnf_export_prefix=config.get("cnf_export_prefix"),
             )
         result = make_result(instance, firefighters, best, lower, stats, config)
         connection.send(("FINAL", result))

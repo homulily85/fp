@@ -21,6 +21,7 @@ def search(
     solver_instance=None,
     initial_horizon_factor=1.5,
     horizon_growth_factor=2.0,
+    cnf_export_prefix=None,
 ):
     upper = best.k
     bounds = compute_horizon_bounds(instance.n, len(instance.initial_fire), firefighters, lower, upper)
@@ -30,8 +31,11 @@ def search(
         return best, lower
     with Solver(name=backend) if solver_instance is None else nullcontext(solver_instance) as solver:
         start = time.monotonic()
-        encoder = Encoder(instance, firefighters, solver, distance)
+        encoder = Encoder(
+            instance, firefighters, solver, distance, capture_cnf=cnf_export_prefix is not None
+        )
         stats["encoding_time"] += time.monotonic() - start
+        exported_cnf = False
         try:
             while lower < upper and time.monotonic() < deadline:
                 start = time.monotonic()
@@ -39,8 +43,25 @@ def search(
                 bound = upper - 1
                 assumptions = encoder.assumptions(horizon, bound, upper)
                 stats["encoding_time"] += time.monotonic() - start
+                exported_now = False
+                if cnf_export_prefix is not None and not exported_cnf:
+                    export_started = time.monotonic()
+                    stats["cnf_export"] = encoder.export_dimacs(
+                        cnf_export_prefix, assumptions, horizon, bound
+                    )
+                    stats["encoding_time"] += time.monotonic() - export_started
+                    exported_cnf = True
+                    exported_now = True
                 stats.update(encoder.stats(), current_t=horizon, max_encoded_t=encoder.horizon)
                 if time.monotonic() >= deadline:
+                    if exported_now:
+                        stats.update(
+                            current_k_bound=bound,
+                            query_horizon=horizon,
+                            query_t_cert=bounds.certification,
+                            update_source="CNF_EXPORT",
+                        )
+                        publish(best, lower, stats)
                     break
                 stats["sat_calls"] += 1
                 stats["current_k_bound"] = bound

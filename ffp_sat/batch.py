@@ -79,6 +79,8 @@ def main(argv=None):
         "t_from_lb",
         "t_cert",
         "max_encoded_t",
+        "cnf_export_raw",
+        "cnf_export_named",
         "status",
         "termination",
         "best_k",
@@ -109,7 +111,11 @@ def main(argv=None):
         writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
         for path, d, output in jobs:
-            result = run(path, d, configuration(args))
+            config = configuration(args)
+            if args.export_cnf_dir:
+                prefix = args.export_cnf_dir / f"{path.stem}_D{d}_seed{args.seed}"
+                config["cnf_export_prefix"] = str(prefix)
+            result = run(path, d, config)
             write_json(output, result)
             writer.writerow(result)
             stream.flush()

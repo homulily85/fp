@@ -10,7 +10,8 @@ Trong môi trường đã có `python-sat`, `networkx`, `ruff`:
 
 ```bash
 python -m ffp_sat dataset/50_ep0.1_0_gilbert_1.in --firefighters 1 \
-  --time-limit 600 --solver cadical300 --seed 0 --json-out results/example.json
+  --time-limit 600 --solver cadical300 --seed 0 --json-out results/example.json \\
+  --export-cnf-dir results/cnf
 
 python -m ffp_sat.batch dataset --firefighters '[1,2]' --time-limit 600 --seed 0
 ```
@@ -33,10 +34,19 @@ cam kết cùng số SAT calls khi chạy với timeout trên các máy khác nh
 Horizon SAT đầu tiên mặc định là
 $T_0=\min(T_{\mathrm{cert}},\lceil1.5T_{\mathrm{inc}}\rceil)$. Có thể đổi hệ số
 $c\ge1$ bằng `--initial-horizon-factor`. `--horizon-growth-factor` điều khiển hệ số
-tăng $g\ge1$, mặc định 2. Các hệ số được ghi trong JSON và CSV.
+ tăng $g\ge1$, mặc định 2. Các hệ số được ghi trong JSON và CSV.
+
+`--export-cnf-dir DIR` xuất query SAT đầu tiên thành hai file trong thư mục chỉ định:
+`<instance>_D<D>_seed<seed>.cnf` là DIMACS thuần, còn file cùng tên có hậu tố
+`.named.cnf` có các dòng chú giải `c var <id> <name>`. Clause vẫn giữ dạng DIMACS,
+nên solver khác đọc được; bảng tên ánh xạ ID sang `b[v,t]`, `d[v,t]`, `a[v,t]`,
+`h[t]` hoặc `totalizer_aux_<id>`. File chứa assumptions của query đầu tiên dưới dạng
+unit clauses để biểu diễn một bài toán SAT độc lập. Nếu preprocessing/heuristic đã
+chứng minh tối ưu và không chạy SAT query thì không tạo file. Batch đặt tên file theo
+instance, D và seed để tách các lượt chạy.
 
 stdout in summary. stderr chỉ ghi khi có cập nhật trạng thái, kèm nguồn `HEURISTIC`,
-`PREPROCESS`, `SAT_QUERY`, `SAT` hoặc `UNSAT`; `SAT_QUERY` có horizon và objective bound, các dòng `SAT`/`UNSAT` ghi kết quả truy vấn tương ứng.
+`PREPROCESS`, `SAT_QUERY`, `SAT`, `UNSAT` hoặc `CNF_EXPORT`; `SAT_QUERY` có horizon và objective bound, các dòng `SAT`/`UNSAT` ghi kết quả truy vấn tương ứng.
 Không in log định kỳ khi trạng thái không đổi. Exit code:
 0 nếu có nghiệm hợp lệ, 1 nếu lỗi hoặc timeout chưa có nghiệm, 2 nếu CLI sai.
 Thời gian đọc, preprocessing, heuristic, encoding và SAT đều nằm trong deadline;

@@ -6,6 +6,7 @@ from pathlib import Path
 
 def make_result(instance, firefighters, best, lower, stats, config):
     upper = best.k
+    cnf_export = stats.get("cnf_export")
     return dict(
         instance=instance.name,
         n=instance.n,
@@ -25,6 +26,8 @@ def make_result(instance, firefighters, best, lower, stats, config):
         incumbent_horizon=best.containment_time,
         containment_semantics="stable_state_after_round",
         reason=None,
+        cnf_export_raw=cnf_export.get("raw") if cnf_export else None,
+        cnf_export_named=cnf_export.get("named") if cnf_export else None,
         schedule=[list(p) for p in best.schedule],
         metadata=dict(
             instance_seed=instance.seed,

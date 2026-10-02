@@ -63,7 +63,7 @@ CSV dùng một hàng cho mỗi lần chạy, các trường gồm:
 | Nhóm | Cột |
 | --- | --- |
 | Định danh/cấu hình | `instance`, `firefighters`, `initial_horizon_factor`, `horizon_growth_factor` |
-| Horizon | `initial_t`, `t_old_safe`, `t_struct`, `t_from_ub`, `t_from_lb`, `t_cert`, `max_encoded_t` |
+| Horizon/CNF | `initial_t`, `t_old_safe`, `t_struct`, `t_from_ub`, `t_from_lb`, `t_cert`, `max_encoded_t`, `cnf_export_raw`, `cnf_export_named` |
 | Kết quả | `status`, `termination`, `best_k`, `saved`, `lower_bound`, `upper_bound`, `gap_abs`, `gap_rel` |
 | Thời gian | `elapsed_total`, `solve_time`, `final_validation_time`, `encoding_time`, `sat_time` |
 | Kiểm tra cuối | `containment_semantics`, `incumbent_horizon`, `final_validation`, `reason`, `error` |
@@ -96,8 +96,18 @@ metadata đầy đủ, cấu hình hay mọi thống kê; mở JSON cùng tên �
 Trong JSON, `metadata` có seed và mô tả nguồn cháy; `config` có time limit, solver,
 seed, ngân sách heuristic và phiên bản thư viện. `pareto_frontier` có thể xuất hiện
 khi portfolio heuristic đã chạy; mỗi phần tử có containment time, $K$ và schedule.
+Nếu bật `--export-cnf-dir`, trường `cnf_export` trong JSON ghi đường dẫn DIMACS
+thuần và bản có chú giải tên biến cho query SAT đầu tiên.
 Trường không áp dụng hoặc không có do worker dừng sớm có thể vắng mặt trong JSON;
-CSV để trống các trường thiếu.
+CSV để trống các trường thiếu. Khi bật export, hai cột `cnf_export_raw` và
+`cnf_export_named` trỏ trực tiếp tới hai file tương ứng.
+
+Export CNF chứa các clause đã sinh đến query đầu tiên, gồm các layer incremental,
+totalizer, containment activation và assumptions query được thêm thành unit clauses.
+Do đó file standalone tương đương query đầu tiên $F(T,K)$; nó không đại diện cho các
+query sau với horizon hoặc bound khác. File `.named.cnf` vẫn là DIMACS hợp lệ: các
+dòng comment `c var <id> <name>` ánh xạ ID số sang tên biến. Biến phụ totalizer có
+tên `totalizer_aux_<id>`.
 
 ## Đọc log tiến trình
 
@@ -112,6 +122,7 @@ khi checkpoint đổi trạng thái, không in heartbeat theo chu kỳ.
 | `[SAT_QUERY]` | Query $F(T,U-1)$ đã được dựng và sắp giải. `SAT calls` đã tăng, nhưng kết quả query chưa được tính. |
 | `[SAT]` | Query trước đó trả SAT và tìm incumbent mới; `UB` giảm. |
 | `[UNSAT]` | Query trả UNSAT; xem `certifying` để biết nó đã chứng minh tối ưu chưa. |
+| `[CNF_EXPORT]` | Đã xuất CNF query đầu tiên, nhưng deadline hết trước khi bắt đầu solve query đó. |
 
 Ví dụ:
 

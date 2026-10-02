@@ -1,6 +1,7 @@
 import argparse
 import math
 import sys
+from pathlib import Path
 
 from .result import write_json
 from .worker import run
@@ -34,6 +35,10 @@ def add_options(parser):
     parser.add_argument("--heuristic-budget", type=positive_float)
     parser.add_argument("--initial-horizon-factor", type=horizon_factor, default=1.5)
     parser.add_argument("--horizon-growth-factor", type=horizon_factor, default=2.0)
+    parser.add_argument(
+        "--export-cnf-dir", type=Path,
+        help="Export the first SAT query as DIMACS and a variable-named DIMACS file",
+    )
 
 
 def configuration(args):
@@ -46,6 +51,7 @@ def configuration(args):
         else min(5.0, 0.05 * args.time_limit),
         initial_horizon_factor=args.initial_horizon_factor,
         horizon_growth_factor=args.horizon_growth_factor,
+        export_cnf_dir=str(args.export_cnf_dir) if args.export_cnf_dir else None,
     )
 
 
@@ -56,7 +62,12 @@ def main(argv=None):
     parser.add_argument("--json-out")
     add_options(parser)
     args = parser.parse_args(argv)
-    result = run(args.instance, args.firefighters, configuration(args))
+    config = configuration(args)
+    if args.export_cnf_dir:
+        name = f"{Path(args.instance).stem}_D{args.firefighters}_seed{args.seed}"
+        prefix = args.export_cnf_dir / name
+        config["cnf_export_prefix"] = str(prefix)
+    result = run(args.instance, args.firefighters, config)
     if args.json_out:
         write_json(args.json_out, result)
     print(
