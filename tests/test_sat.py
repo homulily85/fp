@@ -102,6 +102,12 @@ class SATTests(unittest.TestCase):
         distance, lower = preprocess(instance, d)
         best = threat(instance, d)
         bounds = []
+
+        def record(solution, lb, metrics):
+            bounds.append((lb, metrics["current_t"]))
+            if metrics.get("update_source") == "SAT_QUERY":
+                self.assertEqual(metrics["current_k_bound"], solution.k - 1)
+
         result, lb = search(
             instance,
             d,
@@ -110,12 +116,14 @@ class SATTests(unittest.TestCase):
             distance,
             "cadical300",
             time.monotonic() + 10,
-            lambda s, lb, stats: bounds.append((lb, stats["current_t"])),
+            record,
             statistics(),
         )
         optimum = brute_force(instance, d)
         self.assertEqual((result.k, lb), (optimum, optimum))
-        self.assertEqual(simulate(instance, d, result.schedule), result)
+        checked = simulate(instance, d, result.schedule)
+        self.assertEqual((checked.k, checked.burned), (result.k, result.burned))
+        self.assertLessEqual(checked.containment_time, result.containment_time)
         maximum = (instance.n + d - 1) // d
         for lb, t in bounds:
             if t < maximum:

@@ -9,6 +9,7 @@ from .heuristic import portfolio, threat
 from .instance import read_instance
 from .preprocess import preprocess
 from .result import make_result
+from .simulator import simulate
 from .stk_solver import search
 
 
@@ -48,9 +49,13 @@ def worker(connection, path, firefighters, config, started, deadline):
         stats["heuristic_time"] += time.monotonic() - start
         lower = len(instance.initial_fire)
 
-        def publish(solution, lb, metrics):
+        def publish(solution, lb, metrics, source=None):
             nonlocal latest
-            metrics = dict(metrics, snapshot_elapsed=time.monotonic() - started)
+            metrics = dict(
+                metrics,
+                update_source=source or metrics.get("update_source", "HEURISTIC"),
+                snapshot_elapsed=time.monotonic() - started,
+            )
             latest = make_result(instance, firefighters, solution, lb, metrics, config)
             connection.send(("CHECKPOINT", latest))
 
@@ -59,7 +64,7 @@ def worker(connection, path, firefighters, config, started, deadline):
         start = time.monotonic()
         distance, lower = preprocess(instance, firefighters)
         stats["preprocess_time"] = time.monotonic() - start
-        publish(best, lower, stats)
+        publish(best, lower, stats, source="PREPROCESS")
         if lower < best.k and time.monotonic() < deadline:
             start = time.monotonic()
 
@@ -103,6 +108,51 @@ def worker(connection, path, firefighters, config, started, deadline):
         connection.close()
 
 
+def validate_final_result(path, firefighters, result):
+    """Check the returned incumbent once, after solving, outside solver timing."""
+    schedule = result.get("schedule")
+    if schedule is None:
+        result["final_validation"] = "SKIPPED_NO_SCHEDULE"
+        result["final_validation_time"] = 0.0
+        return result
+
+    started = time.monotonic()
+    try:
+        instance = read_instance(path)
+        solution = simulate(instance, firefighters, schedule)
+        if solution.k != result.get("best_k") or solution.k != result.get("upper_bound"):
+            raise AssertionError(
+                f"Simulator K={solution.k} disagrees with reported incumbent "
+                f"K={result.get('best_k')} / UB={result.get('upper_bound')}"
+            )
+        if result.get("lower_bound") is not None and result["lower_bound"] > solution.k:
+            raise AssertionError("Reported lower bound exceeds verified incumbent")
+        result.update(
+            schedule=[list(actions) for actions in solution.schedule],
+            best_k=solution.k,
+            upper_bound=solution.k,
+            saved=instance.n - solution.k,
+            best_containment_time=solution.containment_time,
+            gap_abs=solution.k - result["lower_bound"] if result.get("lower_bound") is not None else None,
+            gap_rel=(solution.k - result["lower_bound"]) / solution.k
+            if result.get("lower_bound") is not None and solution.k
+            else 0.0,
+        )
+        if result.get("lower_bound") == solution.k:
+            result.update(status="OPTIMAL", termination="PROVEN")
+        result["final_validation"] = "PASSED"
+    except Exception as exc:
+        result.update(
+            status="ERROR",
+            termination="FINAL_VALIDATION_ERROR",
+            final_validation="FAILED",
+            error=f"{type(exc).__name__}: {exc}",
+        )
+    finally:
+        result["final_validation_time"] = time.monotonic() - started
+    return result
+
+
 def run(path, firefighters, config, target=worker):
     import multiprocessing
     from pathlib import Path
@@ -116,27 +166,11 @@ def run(path, firefighters, config, target=worker):
     )
     latest = final = None
     timed_out = False
-    next_log = started
-    logged_bounds = None
+    logged_state = None
     process.start()
     sender.close()
     try:
         while final is None:
-            now = time.monotonic()
-            if now >= next_log:
-                timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
-                info = (
-                    f"LB={latest.get('lower_bound')} UB={latest.get('upper_bound')} "
-                    f"T={latest.get('current_t')} SAT calls={latest.get('sat_calls')}"
-                    if latest
-                    else "starting worker"
-                )
-                print(
-                    f"[{timestamp}] {Path(path).name}: {info} elapsed={now - started:.1f}s",
-                    file=sys.stderr,
-                    flush=True,
-                )
-                next_log = now + 30
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 timed_out = True
@@ -148,10 +182,38 @@ def run(path, firefighters, config, target=worker):
                     break
                 if kind == "CHECKPOINT":
                     latest = message
-                    bounds = (latest.get("lower_bound"), latest.get("upper_bound"))
-                    if bounds != logged_bounds:
-                        logged_bounds = bounds
-                        next_log = time.monotonic()
+                    state = tuple(
+                        latest.get(key)
+                        for key in (
+                            "update_source",
+                            "lower_bound",
+                            "upper_bound",
+                            "current_t",
+                            "current_k_bound",
+                            "sat_calls",
+                            "sat_results",
+                            "unsat_results",
+                        )
+                    )
+                    if state != logged_state:
+                        logged_state = state
+                        timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+                        source = latest.get("update_source", "STATUS")
+                        details = (
+                            f" query=K<={latest['current_k_bound']}"
+                            if latest.get("current_k_bound") is not None
+                            else ""
+                        )
+                        print(
+                            f"[{timestamp}] {Path(path).name} [{source}]: "
+                            f"LB={latest.get('lower_bound')} UB={latest.get('upper_bound')} "
+                            f"T={latest.get('current_t')}{details} "
+                            f"SAT calls={latest.get('sat_calls', 0)} "
+                            f"(SAT={latest.get('sat_results', 0)}, UNSAT={latest.get('unsat_results', 0)}) "
+                            f"elapsed={time.monotonic() - started:.1f}s",
+                            file=sys.stderr,
+                            flush=True,
+                        )
                 else:
                     final = message
             elif not process.is_alive():
@@ -192,6 +254,7 @@ def run(path, firefighters, config, target=worker):
                 result.update(
                     schedule=None, upper_bound=None, lower_bound=None, best_k=None, gap_abs=None, gap_rel=None
                 )
+        # Freeze solver wall time before the final trusted-check pass.
         result["elapsed_total"] = time.monotonic() - started
         result["total_time"] = result["elapsed_total"]
         for field in (
@@ -211,7 +274,7 @@ def run(path, firefighters, config, target=worker):
         result.setdefault("instance", str(path))
         result.setdefault("firefighters", firefighters)
         result.setdefault("config", config)
-        return result
+        return validate_final_result(path, firefighters, result)
     finally:
         if process.is_alive():
             process.kill()

@@ -79,6 +79,8 @@ def main(argv=None):
         "gap_abs",
         "gap_rel",
         "elapsed_total",
+        "final_validation_time",
+        "final_validation",
         "sat_calls",
         "sat_results",
         "unsat_results",

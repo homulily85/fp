@@ -4,7 +4,7 @@ from contextlib import nullcontext
 from pysat.solvers import Solver
 
 from .encoder import Encoder
-from .simulator import simulate
+from .simulator import Solution
 
 
 def search(
@@ -22,39 +22,48 @@ def search(
             while lower < upper and time.monotonic() < deadline:
                 start = time.monotonic()
                 encoder.ensure_horizon(horizon)
-                bound = upper - 1 if horizon < maximum else (lower + upper - 1) // 2
+                bound = upper - 1
                 assumptions = encoder.assumptions(horizon, bound, upper)
                 stats["encoding_time"] += time.monotonic() - start
                 stats.update(encoder.stats(), current_t=horizon)
                 if time.monotonic() >= deadline:
                     break
                 stats["sat_calls"] += 1
+                stats["current_k_bound"] = bound
+                stats["update_source"] = "SAT_QUERY"
                 publish(best, lower, stats)
                 start = time.monotonic()
                 sat = solver.solve(assumptions=assumptions)
                 stats["sat_time"] += time.monotonic() - start
                 if sat:
                     stats["sat_results"] += 1
-                    candidate = simulate(instance, firefighters, encoder.decode(solver.get_model(), horizon))
+                    source = "SAT"
                     model = set(solver.get_model())
                     encoded_burned = frozenset(v for v in range(instance.n) if encoder.b[v, horizon] in model)
-                    if (
-                        candidate.containment_time > horizon
-                        or candidate.k > bound
-                        or candidate.burned != encoded_burned
-                    ):
-                        raise AssertionError("SAT model disagrees with trusted simulator")
+                    encoded_defended = frozenset(
+                        v for v in range(instance.n) if encoder.d[v, horizon] in model
+                    )
+                    candidate = Solution(
+                        tuple(encoder.decode(model, horizon)),
+                        encoded_burned,
+                        encoded_defended,
+                        horizon,
+                    )
+                    if candidate.k >= upper or candidate.k > bound:
+                        raise AssertionError("SAT model does not improve the incumbent bound")
                     best, upper = candidate, candidate.k
                     stats["number_of_incumbent_improvements"] += 1
                 else:
                     stats["unsat_results"] += 1
+                    source = "UNSAT"
                     if horizon == maximum:
-                        lower = bound + 1
+                        lower = upper
                     else:
                         horizon = min(2 * horizon, maximum)
                 if not lower <= upper:
                     raise AssertionError("Invalid objective bounds")
                 stats["current_t"] = horizon
+                stats["update_source"] = source
                 publish(best, lower, stats)
             return best, lower
         finally:

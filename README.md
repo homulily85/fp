@@ -1,8 +1,8 @@
 # FFP STK-SAT
 
 Solver SAT incremental cho **The Firefighter Problem**, tối thiểu hóa số đỉnh cháy
-K, tương đương tối đa hóa số đỉnh được cứu `n - K`. Mọi nghiệm được kiểm chứng
-bằng simulator độc lập trước khi nhận làm incumbent.
+$K$, tương đương tối đa hóa số đỉnh được cứu $n-K$. Lời giải SAT cuối cùng được
+kiểm tra bằng simulator độc lập sau khi quá trình giải kết thúc.
 
 ## Chạy
 
@@ -26,15 +26,19 @@ Mặc định từ chối ghi đè;
 `--overwrite` cho phép thay thế.
 
 `--heuristic-budget` là số giây dành cho incumbent ban đầu và portfolio; mặc định
-`min(5, 0.05 * time_limit)`. Một lượt heuristic đang chạy có thể hoàn tất sau budget
+$\min(5\,\text{s},0.05\,\tau)$, trong đó $\tau$ là `time_limit`. Một lượt heuristic đang chạy có thể hoàn tất sau budget
 riêng, nhưng parent vẫn áp deadline chung. Seed điều khiển RandomizedThreat; không
 cam kết cùng số SAT calls khi chạy với timeout trên các máy khác nhau.
 
-stdout in summary. stderr ghi timestamp UTC khi bounds thay đổi và mỗi 30 giây. Exit code:
+stdout in summary. stderr chỉ ghi khi có cập nhật trạng thái, kèm nguồn `HEURISTIC`,
+`PREPROCESS`, `SAT_QUERY`, `SAT` hoặc `UNSAT`; `SAT_QUERY` có horizon và objective bound, các dòng `SAT`/`UNSAT` ghi kết quả truy vấn tương ứng.
+Không in log định kỳ khi trạng thái không đổi. Exit code:
 0 nếu có nghiệm hợp lệ, 1 nếu lỗi hoặc timeout chưa có nghiệm, 2 nếu CLI sai.
 Thời gian đọc, preprocessing, heuristic, encoding và SAT đều nằm trong deadline;
-spawn, terminate và truyền kết quả qua Pipe được tính trong elapsed tổng.
-Việc ghi JSON và in summary diễn ra sau khoảng thời gian được đo này. Sau deadline
+spawn, terminate và truyền kết quả qua Pipe được tính trong elapsed tổng. Simulator
+chỉ kiểm tra incumbent cuối một lần sau khi solver dừng, và thời gian này không tính
+vào `elapsed_total`. Việc ghi JSON và in summary cũng diễn ra sau khoảng thời gian
+được đo này. Sau deadline
 parent có thể cần thêm khoảng 0,4 giây để terminate/kill và thu hồi process, cộng
 chi phí hệ điều hành và xuất JSON.
 
@@ -63,20 +67,24 @@ Simulator dừng ở vòng đầu không có đỉnh cháy mới, kể cả vòn
 chuẩn hóa tới containment; hành động sau containment bị bỏ. Schedule ngắn được
 mô phỏng tiếp với các vòng phòng vệ rỗng.
 
-JSON chứa schedule, K, saved, LB/UB, gap, containment time, horizon, config,
-metadata, phiên bản dependency và instrumentation. `gap_rel=(UB-LB)/UB`.
+JSON chứa schedule, $K$, saved, LB/UB, gap, containment time, horizon, config,
+metadata, phiên bản dependency, thống kê solver và trạng thái/thời gian kiểm tra
+cuối. `gap_rel` được tính theo $(U-L)/U$.
 
 | Status | Termination | Ý nghĩa |
 | --- | --- | --- |
 | OPTIMAL | PROVEN | LB = UB, optimum được chứng minh |
-| FEASIBLE | TIME_LIMIT | Có nghiệm đã kiểm chứng, chưa chứng minh tối ưu |
+| FEASIBLE | TIME_LIMIT | Có incumbent, chưa chứng minh tối ưu; trường `final_validation` cho biết kết quả kiểm tra |
 | ERROR | TIME_LIMIT_NO_INCUMBENT | Deadline trước checkpoint khả thi; UB/schedule/gap null |
 | ERROR | WORKER_ERROR hoặc WORKER_EXIT | Lỗi; giữ incumbent trước lỗi nếu đã có |
 
-`elapsed_total`/`total_time` đo bởi parent. `snapshot_elapsed` chỉ thời điểm checkpoint
-thống kê. Nếu hard-kill trong encoding/SAT, thời gian pha đang chạy và biến/clauses
-mới chưa gửi không có trong snapshot. `sat_calls` đếm call bắt đầu; `sat_results` và
-`unsat_results` chỉ đếm call hoàn tất. Call bị kill không bao giờ được hiểu là UNSAT.
+`elapsed_total`/`total_time` đo bởi parent tới lúc solver dừng; gồm parse, preprocessing,
+heuristic, encoding, SAT và dừng worker. Kiểm tra simulator cuối chạy sau mốc này;
+thời gian nằm riêng trong `final_validation_time`. `snapshot_elapsed` chỉ thời điểm
+checkpoint thống kê. Nếu hard-kill trong encoding/SAT, thời gian pha đang chạy và
+biến/clauses mới chưa gửi không có trong snapshot. `sat_calls` đếm call bắt đầu;
+`sat_results` và `unsat_results` chỉ đếm call hoàn tất. Call bị kill không bao giờ
+được hiểu là UNSAT.
 
 ## Thiết kế và tính đúng
 
@@ -94,20 +102,21 @@ layer, không rebuild solver hay giữ containment cũ bằng unit clause.
 
 Lower bound ban đầu:
 
-```text
-|B| + max(0, |N(B) \ B| - D)
-```
+$$
+L=|B|+\max\left(0,|N(B)\setminus B|-D\right)
+$$
 
-Horizon an toàn `T_max = ceil(n/D)`: bổ sung các lượt bảo vệ chưa dùng bằng đỉnh
+Horizon an toàn $T_{\max}=\lceil n/D\rceil$: bổ sung các lượt bảo vệ chưa dùng bằng đỉnh
 untouched không thể làm nghiệm xấu hơn. Trong chiến lược được bổ sung này, nếu
 một vòng chưa contained thì phải bảo vệ đủ D đỉnh (nếu có ít hơn D đỉnh untouched,
-bảo vệ tất cả sẽ contained ngay). Nếu đến vòng T_max vẫn lan, các vòng đó đã bảo
-vệ D*T_max đỉnh, ngoài ít nhất một đỉnh cháy ban đầu: vượt n, mâu thuẫn. Do đó có
-nghiệm tối ưu contained không muộn hơn T_max.
+bảo vệ tất cả sẽ contained ngay). Nếu đến vòng $T_{\max}$ vẫn lan, các vòng đó đã bảo
+vệ $D T_{\max}$ đỉnh, ngoài ít nhất một đỉnh cháy ban đầu: vượt $n$, mâu thuẫn. Do đó có
+nghiệm tối ưu contained không muộn hơn $T_{\max}$.
 
-Ở horizon ngắn, query `F(T,U-1)` để cải thiện incumbent; UNSAT chỉ tăng T, không
-tăng LB. Tại T_max, binary search tăng LB bằng UNSAT hoặc giảm UB bằng nghiệm đã
-kiểm chứng. Luôn giữ `LB <= K* <= UB`; chỉ trả OPTIMAL khi LB = UB.
+Ở mọi horizon, query tuần tự $F(T,U-1)$ từ incumbent UB. SAT cập nhật UB theo số
+đỉnh cháy của model; UNSAT ở horizon ngắn chỉ tăng $T$, không tăng LB. Tại
+$T_{\max}$, UNSAT với $K\le U-1$ chứng minh incumbent UB là tối ưu, vì horizon này
+bao quát nghiệm tối ưu toàn cục. Luôn giữ $L\le K^*\le U$; chỉ trả OPTIMAL khi $L=U$.
 
 V1 không loại bỏ thành phần rời rạc hoặc thêm symmetry breaking. Với D=1 và graph
 lớn, horizon cao có thể tạo rất nhiều clause; timeout trả incumbent và bounds,
@@ -129,3 +138,8 @@ Có kiểm thử totalizer exhaustive, collision ID, activation, cháy tự phá
 UNSAT horizon ngắn, chỉ một solver, timeout/kill/crash, CLI và batch.
 
 Không chạy toàn bộ dataset 600 giây/instance trong bộ kiểm thử mặc định.
+
+## Tài liệu chi tiết
+
+- [Đọc kết quả CSV và JSON](docs/RESULTS.md)
+- [Mô hình SAT và các thuật toán](docs/MODEL_AND_ALGORITHMS.md)

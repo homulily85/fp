@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 from pysat.solvers import Solver
 
+from ffp_sat.simulator import simulate as trusted_simulate
 from ffp_sat.worker import run, worker
 
 
@@ -26,7 +27,7 @@ def hanging_worker(connection, path, d, config, started, deadline):
                     lower_bound=1,
                     upper_bound=2,
                     best_k=2,
-                    schedule=[[1]],
+                    schedule=[[2]],
                 ),
             )
         )
@@ -40,12 +41,34 @@ def crashing_worker(connection, path, d, config, started, deadline):
 
 def stubborn_worker(connection, path, d, config, started, deadline):
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
-    connection.send(("CHECKPOINT", dict(lower_bound=1, upper_bound=2, best_k=2, schedule=[[1]])))
+    connection.send(("CHECKPOINT", dict(lower_bound=1, upper_bound=2, best_k=2, schedule=[[2]])))
     time.sleep(10)
 
 
 def final_worker(connection, path, d, config, started, deadline):
     connection.send(("FINAL", dict(status="OPTIMAL", termination="PROVEN", lower_bound=1, upper_bound=1)))
+    connection.close()
+
+
+def schedule_worker(connection, path, d, config, started, deadline):
+    connection.send(
+        (
+            "FINAL",
+            dict(
+                status="OPTIMAL",
+                termination="PROVEN",
+                n=2,
+                m=1,
+                firefighters=d,
+                best_k=1,
+                saved=1,
+                lower_bound=1,
+                upper_bound=1,
+                schedule=[[1]],
+                best_containment_time=1,
+            ),
+        )
+    )
     connection.close()
 
 
@@ -62,20 +85,50 @@ class Collector:
 
 class ProcessTests(unittest.TestCase):
     def test_timeout_checkpoint(self):
-        for checkpoint in (False, True):
-            result = run("unused", 1, dict(time_limit=0.4, checkpoint=checkpoint), hanging_worker)
-            self.assertLess(result["elapsed_total"], 1.5)
-            self.assertEqual(result["status"], "FEASIBLE" if checkpoint else "ERROR")
-            self.assertEqual(result["termination"], "TIME_LIMIT" if checkpoint else "TIME_LIMIT_NO_INCUMBENT")
-            if checkpoint:
-                self.assertEqual(result["schedule"], [[1]])
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "tiny.in"
+            path.write_text("0\n3\n2\nx\n1\n0\n0 1\n1 2\n")
+            for checkpoint in (False, True):
+                result = run(str(path), 1, dict(time_limit=0.4, checkpoint=checkpoint), hanging_worker)
+                self.assertLess(result["elapsed_total"], 1.5)
+                self.assertEqual(result["status"], "FEASIBLE" if checkpoint else "ERROR")
+                self.assertEqual(
+                    result["termination"], "TIME_LIMIT" if checkpoint else "TIME_LIMIT_NO_INCUMBENT"
+                )
+                if checkpoint:
+                    self.assertEqual(result["schedule"], [[2], []])
+                    self.assertEqual(result["final_validation"], "PASSED")
 
     def test_kill_fallback_and_final(self):
-        result = run("unused", 1, dict(time_limit=0.5), stubborn_worker)
-        self.assertEqual(result["status"], "FEASIBLE")
-        self.assertLess(result["elapsed_total"], 1.5)
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "tiny.in"
+            path.write_text("0\n3\n2\nx\n1\n0\n0 1\n1 2\n")
+            result = run(str(path), 1, dict(time_limit=0.5), stubborn_worker)
+            self.assertEqual(result["status"], "FEASIBLE")
+            self.assertLess(result["elapsed_total"], 1.5)
+            self.assertEqual(result["final_validation"], "PASSED")
         result = run("unused", 1, dict(time_limit=1), final_worker)
         self.assertEqual(result["termination"], "PROVEN")
+        self.assertEqual(result["final_validation"], "SKIPPED_NO_SCHEDULE")
+
+    def test_final_validation_runs_once_outside_solver_time(self):
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "tiny.in"
+            path.write_text("0\n2\n1\nx\n1\n0\n0 1\n")
+            original = trusted_simulate
+
+            def slow_check(*args, **kwargs):
+                time.sleep(0.15)
+                return original(*args, **kwargs)
+
+            wall_started = time.monotonic()
+            with patch("ffp_sat.worker.simulate", side_effect=slow_check) as checker:
+                result = run(str(path), 1, dict(time_limit=1), schedule_worker)
+            wall_elapsed = time.monotonic() - wall_started
+            self.assertEqual(checker.call_count, 1)
+            self.assertEqual(result["final_validation"], "PASSED")
+            self.assertGreaterEqual(result["final_validation_time"], 0.14)
+            self.assertGreater(wall_elapsed - result["elapsed_total"], 0.1)
 
     def test_worker_uses_one_solver(self):
         with tempfile.TemporaryDirectory() as root:
@@ -113,6 +166,34 @@ class ProcessTests(unittest.TestCase):
             )
             self.assertEqual(process.returncode, 2)
 
+    def test_logs_update_source_and_sat_outcome(self):
+        with tempfile.TemporaryDirectory() as root:
+            instance = Path(root) / "sat_case.in"
+            instance.write_text("0\n6\n7\nx\n1\n0\n0 1\n0 5\n1 3\n1 4\n2 4\n2 5\n4 5\n")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "ffp_sat",
+                    str(instance),
+                    "--firefighters",
+                    "1",
+                    "--time-limit",
+                    "3",
+                    "--heuristic-budget",
+                    "0.001",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=6,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("[HEURISTIC]", result.stderr)
+            self.assertIn("[PREPROCESS]", result.stderr)
+            self.assertIn("[SAT_QUERY]", result.stderr)
+            self.assertIn("[UNSAT]", result.stderr)
+            self.assertNotIn("starting worker", result.stderr)
+
     def test_cli_and_batch(self):
         with tempfile.TemporaryDirectory() as root:
             root = Path(root)
@@ -137,6 +218,7 @@ class ProcessTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             parsed = json.loads(output.read_text())
             self.assertIn(parsed["status"], ("OPTIMAL", "FEASIBLE"))
+            self.assertEqual(parsed["final_validation"], "PASSED")
             self.assertLess(parsed["elapsed_total"], 2)
             dataset = root / "data"
             dataset.mkdir()
