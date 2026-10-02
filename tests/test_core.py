@@ -44,7 +44,9 @@ class CoreTests(unittest.TestCase):
         result = simulate(instance, 1, [[], [2]])
         self.assertEqual(result.burned, frozenset({0, 1}))
         self.assertEqual(result.containment_time, 2)
-        self.assertEqual(simulate(instance, 1, []).containment_time, 4)
+        self.assertEqual(simulate(instance, 1, []).containment_time, 3)
+        self.assertEqual(simulate(graph(3, [(0, 1), (1, 2)]), 1, []).containment_time, 2)
+        self.assertEqual(simulate(graph(2, []), 1, []).containment_time, 0)
         for schedule in [[[0]], [[1, 1]], [[1, 2]], [[], [1]]]:
             with self.assertRaises(ValueError):
                 simulate(instance, 1, schedule)
@@ -71,4 +73,8 @@ class CoreTests(unittest.TestCase):
         for i, left in enumerate(frontier):
             for j, right in enumerate(frontier):
                 if i != j:
-                    self.assertFalse(left.k <= right.k and left.containment_time <= right.containment_time)
+                    self.assertFalse(
+                        left.k <= right.k
+                        and left.containment_time <= right.containment_time
+                        and (left.k < right.k or left.containment_time < right.containment_time)
+                    )

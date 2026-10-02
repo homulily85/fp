@@ -19,20 +19,21 @@ def brute_force(instance, firefighters, horizon=None):
 
     @lru_cache(None)
     def visit(burned, defended, remaining):
+        neighbors = 0
+        for v in range(instance.n):
+            if (burned >> v) & 1:
+                neighbors |= adjacency[v]
+        if not (neighbors & (all_vertices ^ (burned | defended))):
+            return burned.bit_count()
+        if remaining == 0:
+            return instance.n + 1
         untouched = [v for v in range(instance.n) if not ((burned | defended) >> v) & 1]
         best = instance.n + 1
         for count in range(min(firefighters, len(untouched)) + 1):
             for actions in combinations(untouched, count):
                 protected = defended | sum(1 << v for v in actions)
-                neighbors = 0
-                for v in range(instance.n):
-                    if (burned >> v) & 1:
-                        neighbors |= adjacency[v]
                 spread = neighbors & (all_vertices ^ (burned | protected))
-                if not spread:
-                    best = min(best, burned.bit_count())
-                elif remaining > 1:
-                    best = min(best, visit(burned | spread, protected, remaining - 1))
+                best = min(best, visit(burned | spread, protected, remaining - 1))
         return best
 
     initial = sum(1 << v for v in instance.initial_fire)

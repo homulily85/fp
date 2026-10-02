@@ -16,12 +16,15 @@ class Encoder:
             self.b[v, 0], self.d[v, 0] = self.vars.new(), self.vars.new()
             self.add([self.b[v, 0] if v in instance.initial_fire else -self.b[v, 0]])
             self.add([-self.d[v, 0]])
+        self._add_containment(0)
 
     def add(self, clause):
         self.solver.add_clause(clause)
         self.clauses += 1
 
     def ensure_horizon(self, target):
+        if target < 0:
+            raise ValueError("Horizon must be non-negative")
         if target <= self.horizon:
             return
         self.extensions += 1
@@ -44,10 +47,16 @@ class Encoder:
             bound = tree.assumption(self.firefighters)
             if bound is not None:
                 self.add([bound])
-            self.h[t] = self.vars.new(activation=True)
-            for v in range(self.instance.n):
-                self.add([-self.h[t], -self.b[v, t], self.b[v, t - 1]])
+            self._add_containment(t)
         self.horizon = target
+
+    def _add_containment(self, t):
+        self.h[t] = self.vars.new(activation=True)
+        # A contained state has no edge from a burned vertex to an untouched
+        # one. Check each orientation of every undirected edge.
+        for u in range(self.instance.n):
+            for v in sorted(self.instance.adjacency[u]):
+                self.add([-self.h[t], -self.b[u, t], self.b[v, t], self.d[v, t]])
 
     def assumptions(self, t, k, upper):
         if t not in self.objectives:

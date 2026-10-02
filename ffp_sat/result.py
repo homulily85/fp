@@ -11,6 +11,7 @@ def make_result(instance, firefighters, best, lower, stats, config):
         n=instance.n,
         m=instance.m,
         firefighters=firefighters,
+        initial_horizon_factor=config.get("initial_horizon_factor", 1.5),
         status="OPTIMAL" if lower == upper else "FEASIBLE",
         termination="PROVEN" if lower == upper else "TIME_LIMIT",
         best_k=upper,
@@ -20,6 +21,9 @@ def make_result(instance, firefighters, best, lower, stats, config):
         gap_abs=upper - lower,
         gap_rel=(upper - lower) / upper if upper else 0.0,
         best_containment_time=best.containment_time,
+        incumbent_horizon=best.containment_time,
+        containment_semantics="stable_state_after_round",
+        reason=None,
         schedule=[list(p) for p in best.schedule],
         metadata=dict(
             instance_seed=instance.seed,

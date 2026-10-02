@@ -25,6 +25,7 @@ def add_options(parser):
     parser.add_argument("--solver", default="cadical300")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--heuristic-budget", type=positive_float)
+    parser.add_argument("--initial-horizon-factor", type=positive_float, default=1.5)
 
 
 def configuration(args):
@@ -35,6 +36,7 @@ def configuration(args):
         heuristic_budget=args.heuristic_budget
         if args.heuristic_budget is not None
         else min(5.0, 0.05 * args.time_limit),
+        initial_horizon_factor=args.initial_horizon_factor,
     )
 
 

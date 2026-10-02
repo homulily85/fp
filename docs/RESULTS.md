@@ -10,13 +10,17 @@ lính cứu hỏa. Một dòng CSV tương ứng với một lần chạy; JSON 
 | --- | --- |
 | `status` | `OPTIMAL` khi đã chứng minh tối ưu; `FEASIBLE` khi có incumbent nhưng dừng do timeout; `ERROR` khi worker hoặc kiểm tra cuối gặp lỗi, hoặc hết giờ trước incumbent. |
 | `termination` | Lý do kết thúc: thường là `PROVEN`, `TIME_LIMIT`, `TIME_LIMIT_NO_INCUMBENT`, `WORKER_ERROR`, `WORKER_EXIT` hoặc `FINAL_VALIDATION_ERROR`. |
+| `initial_horizon_factor` | Hệ số $c$ dùng để khởi tạo $T_0$ từ containment time heuristic; mặc định $1.5$. |
 | `best_k` | Số đỉnh cháy của incumbent tốt nhất, ký hiệu $K$. |
 | `saved` | Số đỉnh được cứu: $n-K$. |
 | `lower_bound` | Cận dưới $L$ cho số đỉnh cháy tối ưu. |
 | `upper_bound` | Cận trên $U$, lấy từ incumbent đã biết. Sau kiểm tra cuối, $U$ phải bằng $K$ của schedule. |
 | `gap_abs` | Khoảng cách tuyệt đối $U-L$. |
 | `gap_rel` | Khoảng cách tương đối $(U-L)/U$; bằng 0 khi $U=0$. |
-| `best_containment_time` | Vòng đầu tiên không có đỉnh mới bị cháy trong schedule cuối đã mô phỏng. |
+| `best_containment_time` | Simulator xác nhận trạng thái sau vòng này contained: không còn cạnh từ đỉnh burned tới đỉnh untouched. Có thể bằng 0. |
+| `incumbent_horizon` | Horizon mà SAT yêu cầu incumbent contained; simulator cuối phải xác nhận containment không muộn hơn mốc này. |
+| `containment_semantics` | Định nghĩa containment; hiện là `stable_state_after_round`. |
+| `reason` | Mã lỗi chi tiết; validation không nhất quán dùng `MODEL_VALIDATION_FAILED`. |
 
 `OPTIMAL` có nghĩa $L=U$. Với `FEASIBLE`, schedule vẫn là incumbent khả thi nếu
 `final_validation` là `PASSED`; hai cận cho biết khoảng nghiệm tối ưu chưa được
@@ -33,12 +37,15 @@ vòng 1. ID bắt đầu từ 0. Ví dụ:
 
 nghĩa là bảo vệ đỉnh 3 và 7 ở vòng 1, rồi đỉnh 5 ở vòng 2. JSON cuối đã được
 chuẩn hóa đến containment; các lượt sau khi lửa dừng không có trong schedule.
+`best_containment_time` có thể nhỏ hơn `incumbent_horizon`, vì SAT chỉ yêu cầu
+containment không muộn hơn horizon query.
 
 Sau khi worker dừng hoặc bị timeout, parent chạy simulator đúng một lần trên
 schedule cuối. `final_validation` là `PASSED`, `FAILED` hoặc `SKIPPED_NO_SCHEDULE`;
 `final_validation_time` đo thời gian đọc instance và chạy simulator. Nếu kiểm tra
-không khớp $K$ hoặc $U$, status đổi thành `ERROR` và termination thành
-`FINAL_VALIDATION_ERROR`. Khi chưa có schedule, trường này là
+không khớp $K$ hoặc $U$, hoặc containment xảy ra muộn hơn `incumbent_horizon`, status
+đổi thành `ERROR`, termination thành `FINAL_VALIDATION_ERROR` và
+`reason=MODEL_VALIDATION_FAILED`. Khi chưa có schedule, trường này là
 `SKIPPED_NO_SCHEDULE` và thời gian bằng 0.
 
 ## CSV tóm tắt
@@ -47,10 +54,10 @@ CSV dùng một hàng cho mỗi lần chạy, các trường gồm:
 
 | Nhóm | Cột |
 | --- | --- |
-| Định danh | `instance`, `firefighters` |
+| Định danh/cấu hình | `instance`, `firefighters`, `initial_horizon_factor` |
 | Kết quả | `status`, `termination`, `best_k`, `saved`, `lower_bound`, `upper_bound`, `gap_abs`, `gap_rel` |
-| Thời gian | `elapsed_total`, `final_validation_time`, `encoding_time`, `sat_time` |
-| Kiểm tra cuối | `final_validation`, `error` |
+| Thời gian | `elapsed_total`, `solve_time`, `final_validation_time`, `encoding_time`, `sat_time` |
+| Kiểm tra cuối | `containment_semantics`, `incumbent_horizon`, `final_validation`, `reason`, `error` |
 | SAT | `sat_calls`, `sat_results`, `unsat_results` |
 | Kích thước encoding | `n_semantic_vars`, `n_aux_vars`, `n_clauses` |
 
@@ -59,7 +66,7 @@ metadata đầy đủ, cấu hình hay mọi thống kê; mở JSON cùng tên �
 
 ## Thời gian và bộ đếm
 
-- `elapsed_total` và `total_time` đo bởi tiến trình parent đến khi worker dừng,
+- `elapsed_total`, `solve_time` và `total_time` đo bởi tiến trình parent đến khi worker dừng,
   gồm đọc instance, preprocessing, heuristic, sinh encoding, SAT, giao tiếp và
   thu hồi worker. Kiểm tra simulator cuối chạy sau mốc này.
 - `final_validation_time` không cộng vào `elapsed_total`; nó bao gồm đọc lại input

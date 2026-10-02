@@ -70,6 +70,7 @@ def main(argv=None):
     fields = [
         "instance",
         "firefighters",
+        "initial_horizon_factor",
         "status",
         "termination",
         "best_k",
@@ -79,8 +80,11 @@ def main(argv=None):
         "gap_abs",
         "gap_rel",
         "elapsed_total",
+        "solve_time",
         "final_validation_time",
         "final_validation",
+        "containment_semantics",
+        "incumbent_horizon",
         "sat_calls",
         "sat_results",
         "unsat_results",
@@ -90,6 +94,7 @@ def main(argv=None):
         "encoding_time",
         "sat_time",
         "error",
+        "reason",
     ]
     failed = False
     with csv_path.open("w", newline="") as stream:

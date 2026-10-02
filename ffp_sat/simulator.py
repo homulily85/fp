@@ -18,6 +18,16 @@ def simulate(instance, firefighters, schedule):
         raise ValueError("Firefighters must be positive")
     burned, defended = set(instance.initial_fire), set()
     normalized = []
+
+    def contained():
+        frontier = set().union(*(instance.adjacency[v] for v in burned)) - burned - defended
+        return not frontier
+
+    # Containment is a property of the current state, so it can hold before
+    # the first firefighter round (for example, an isolated initial fire).
+    if contained():
+        return Solution((), frozenset(burned), frozenset(defended), 0)
+
     for t in range(1, instance.n + 2):
         actions = tuple(schedule[t - 1]) if t <= len(schedule) else ()
         if len(actions) > firefighters or len(set(actions)) != len(actions):
@@ -27,7 +37,7 @@ def simulate(instance, firefighters, schedule):
         defended.update(actions)
         normalized.append(tuple(sorted(actions)))
         spread = set().union(*(instance.adjacency[v] for v in burned)) - burned - defended
-        if not spread:
-            return Solution(tuple(normalized), frozenset(burned), frozenset(defended), t)
         burned.update(spread)
+        if contained():
+            return Solution(tuple(normalized), frozenset(burned), frozenset(defended), t)
     raise AssertionError("Fire did not terminate")

@@ -94,6 +94,7 @@ def worker(connection, path, firefighters, config, started, deadline):
                 publish,
                 stats,
                 solver_instance=solver,
+                initial_horizon_factor=config.get("initial_horizon_factor", 1.5),
             )
         result = make_result(instance, firefighters, best, lower, stats, config)
         connection.send(("FINAL", result))
@@ -127,6 +128,12 @@ def validate_final_result(path, firefighters, result):
             )
         if result.get("lower_bound") is not None and result["lower_bound"] > solution.k:
             raise AssertionError("Reported lower bound exceeds verified incumbent")
+        incumbent_horizon = result.get("incumbent_horizon", result.get("best_containment_time"))
+        if incumbent_horizon is not None and solution.containment_time > incumbent_horizon:
+            raise AssertionError(
+                f"Simulator containment T={solution.containment_time} exceeds incumbent horizon "
+                f"T={incumbent_horizon}"
+            )
         result.update(
             schedule=[list(actions) for actions in solution.schedule],
             best_k=solution.k,
@@ -138,13 +145,14 @@ def validate_final_result(path, firefighters, result):
             if result.get("lower_bound") is not None and solution.k
             else 0.0,
         )
-        if result.get("lower_bound") == solution.k:
+        if result.get("status") != "ERROR" and result.get("lower_bound") == solution.k:
             result.update(status="OPTIMAL", termination="PROVEN")
         result["final_validation"] = "PASSED"
     except Exception as exc:
         result.update(
             status="ERROR",
             termination="FINAL_VALIDATION_ERROR",
+            reason="MODEL_VALIDATION_FAILED",
             final_validation="FAILED",
             error=f"{type(exc).__name__}: {exc}",
         )
@@ -189,6 +197,8 @@ def run(path, firefighters, config, target=worker):
                             "lower_bound",
                             "upper_bound",
                             "current_t",
+                            "query_horizon",
+                            "incumbent_horizon",
                             "current_k_bound",
                             "sat_calls",
                             "sat_results",
@@ -199,15 +209,19 @@ def run(path, firefighters, config, target=worker):
                         logged_state = state
                         timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
                         source = latest.get("update_source", "STATUS")
+                        shown_t = latest.get("query_horizon", latest.get("current_t"))
+                        next_t = latest.get("current_t")
                         details = (
                             f" query=K<={latest['current_k_bound']}"
                             if latest.get("current_k_bound") is not None
                             else ""
                         )
+                        if source == "UNSAT" and next_t != shown_t:
+                            details += f" next_T={next_t}"
                         print(
                             f"[{timestamp}] {Path(path).name} [{source}]: "
                             f"LB={latest.get('lower_bound')} UB={latest.get('upper_bound')} "
-                            f"T={latest.get('current_t')}{details} "
+                            f"T={shown_t}{details} "
                             f"SAT calls={latest.get('sat_calls', 0)} "
                             f"(SAT={latest.get('sat_results', 0)}, UNSAT={latest.get('unsat_results', 0)}) "
                             f"elapsed={time.monotonic() - started:.1f}s",
@@ -256,6 +270,7 @@ def run(path, firefighters, config, target=worker):
                 )
         # Freeze solver wall time before the final trusted-check pass.
         result["elapsed_total"] = time.monotonic() - started
+        result["solve_time"] = result["elapsed_total"]
         result["total_time"] = result["elapsed_total"]
         for field in (
             "n",
@@ -268,12 +283,16 @@ def run(path, firefighters, config, target=worker):
             "gap_rel",
             "schedule",
             "best_containment_time",
+            "incumbent_horizon",
             "t_max",
         ):
             result.setdefault(field, None)
         result.setdefault("instance", str(path))
         result.setdefault("firefighters", firefighters)
+        result.setdefault("initial_horizon_factor", config.get("initial_horizon_factor", 1.5))
         result.setdefault("config", config)
+        result.setdefault("containment_semantics", "stable_state_after_round")
+        result.setdefault("reason", None)
         return validate_final_result(path, firefighters, result)
     finally:
         if process.is_alive():

@@ -30,6 +30,11 @@ $\min(5\,\text{s},0.05\,\tau)$, trong đó $\tau$ là `time_limit`. Một lượ
 riêng, nhưng parent vẫn áp deadline chung. Seed điều khiển RandomizedThreat; không
 cam kết cùng số SAT calls khi chạy với timeout trên các máy khác nhau.
 
+Horizon SAT đầu tiên mặc định là
+$T_0=\min(T_{\max},\operatorname{round}(1.5T_{\mathrm{inc}}))$; phép làm tròn dùng
+quy tắc nửa lên. Có thể đổi hệ số bằng `--initial-horizon-factor` (số dương); hệ số
+được ghi trong JSON và CSV.
+
 stdout in summary. stderr chỉ ghi khi có cập nhật trạng thái, kèm nguồn `HEURISTIC`,
 `PREPROCESS`, `SAT_QUERY`, `SAT` hoặc `UNSAT`; `SAT_QUERY` có horizon và objective bound, các dòng `SAT`/`UNSAT` ghi kết quả truy vấn tương ứng.
 Không in log định kỳ khi trạng thái không đổi. Exit code:
@@ -93,7 +98,8 @@ biến/clauses mới chưa gửi không có trong snapshot. `sat_calls` đếm c
 - `stk_solver`, `worker`: STK search và một solver giữ xuyên suốt worker; parent giữ checkpoint qua Pipe.
 - `result`, `cli`, `batch`: kết quả atomic và giao diện thực nghiệm.
 
-Encoding có b[v,t] (cháy), d[v,t] (đã bảo vệ), a[v,t] (bảo vệ mới). Monotonicity,
+Encoding có $b_{v,t}$ (cháy), $d_{v,t}$ (đã bảo vệ), $a_{v,t}$ (bảo vệ mới).
+Monotonicity,
 loại trừ cháy–phòng vệ, spread và clause cấm cháy tự phát mô tả chính xác động học.
 Khoảng cách BFS cấm cháy trước thời điểm lửa có thể tới. Mỗi layer có totalizer
 firefighter với bound cố định. Objective totalizer được tạo lazily; bound objective
@@ -106,12 +112,12 @@ $$
 L=|B|+\max\left(0,|N(B)\setminus B|-D\right)
 $$
 
-Horizon an toàn $T_{\max}=\lceil n/D\rceil$: bổ sung các lượt bảo vệ chưa dùng bằng đỉnh
-untouched không thể làm nghiệm xấu hơn. Trong chiến lược được bổ sung này, nếu
-một vòng chưa contained thì phải bảo vệ đủ D đỉnh (nếu có ít hơn D đỉnh untouched,
-bảo vệ tất cả sẽ contained ngay). Nếu đến vòng $T_{\max}$ vẫn lan, các vòng đó đã bảo
-vệ $D T_{\max}$ đỉnh, ngoài ít nhất một đỉnh cháy ban đầu: vượt $n$, mâu thuẫn. Do đó có
-nghiệm tối ưu contained không muộn hơn $T_{\max}$.
+Horizon dùng trong v1 là $T_{\max}=\lceil |V|/D\rceil$. Tính chất cần dùng là tồn tại
+ít nhất một nghiệm tối ưu được contained không muộn hơn mốc này; không khẳng định
+mọi chiến lược đều dừng trước đó. Định nghĩa containment là trạng thái cuối không
+còn cạnh từ đỉnh burned tới đỉnh untouched, nên trường hợp ban đầu đã ổn định có
+containment time bằng $0$. Xem [mô hình và thuật toán](docs/MODEL_AND_ALGORITHMS.md)
+để biết đầy đủ công thức.
 
 Ở mọi horizon, query tuần tự $F(T,U-1)$ từ incumbent UB. SAT cập nhật UB theo số
 đỉnh cháy của model; UNSAT ở horizon ngắn chỉ tăng $T$, không tăng LB. Tại

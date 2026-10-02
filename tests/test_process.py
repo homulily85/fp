@@ -13,7 +13,7 @@ from unittest.mock import patch
 from pysat.solvers import Solver
 
 from ffp_sat.simulator import simulate as trusted_simulate
-from ffp_sat.worker import run, worker
+from ffp_sat.worker import run, validate_final_result, worker
 
 
 def hanging_worker(connection, path, d, config, started, deadline):
@@ -96,7 +96,7 @@ class ProcessTests(unittest.TestCase):
                     result["termination"], "TIME_LIMIT" if checkpoint else "TIME_LIMIT_NO_INCUMBENT"
                 )
                 if checkpoint:
-                    self.assertEqual(result["schedule"], [[2], []])
+                    self.assertEqual(result["schedule"], [[2]])
                     self.assertEqual(result["final_validation"], "PASSED")
 
     def test_kill_fallback_and_final(self):
@@ -129,6 +129,38 @@ class ProcessTests(unittest.TestCase):
             self.assertEqual(result["final_validation"], "PASSED")
             self.assertGreaterEqual(result["final_validation_time"], 0.14)
             self.assertGreater(wall_elapsed - result["elapsed_total"], 0.1)
+
+    def test_final_validation_checks_horizon_and_preserves_worker_error(self):
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "path.in"
+            path.write_text("0\n3\n2\nx\n1\n0\n0 1\n1 2\n")
+            too_short = dict(
+                status="FEASIBLE",
+                termination="TIME_LIMIT",
+                best_k=3,
+                upper_bound=3,
+                lower_bound=1,
+                schedule=[[], []],
+                incumbent_horizon=1,
+            )
+            checked = validate_final_result(path, 1, too_short)
+            self.assertEqual(checked["status"], "ERROR")
+            self.assertEqual(checked["reason"], "MODEL_VALIDATION_FAILED")
+            self.assertEqual(checked["final_validation"], "FAILED")
+
+            worker_error = dict(
+                status="ERROR",
+                termination="WORKER_ERROR",
+                best_k=1,
+                upper_bound=1,
+                lower_bound=1,
+                schedule=[[1]],
+                incumbent_horizon=1,
+            )
+            valid = validate_final_result(path, 1, worker_error)
+            self.assertEqual(valid["final_validation"], "PASSED")
+            self.assertEqual(valid["status"], "ERROR")
+            self.assertEqual(valid["termination"], "WORKER_ERROR")
 
     def test_worker_uses_one_solver(self):
         with tempfile.TemporaryDirectory() as root:

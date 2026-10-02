@@ -6,10 +6,10 @@ import unittest
 from pysat.solvers import Solver
 
 from ffp_sat.encoder import Encoder
-from ffp_sat.heuristic import threat
+from ffp_sat.heuristic import dominates, threat
 from ffp_sat.preprocess import preprocess
-from ffp_sat.simulator import simulate
-from ffp_sat.stk_solver import search
+from ffp_sat.simulator import Solution, simulate
+from ffp_sat.stk_solver import initial_horizon, next_horizon, search
 from ffp_sat.totalizer import AtMost
 from ffp_sat.variables import VarManager
 
@@ -47,20 +47,33 @@ class SATTests(unittest.TestCase):
             encoder.close()
 
     def test_activation_and_extension(self):
-        # A spreading path can satisfy T=4 while not contained at T=2.
+        # A spreading path is not stable at T=2, but is stable at T=3.
         instance = graph(4, [(0, 1), (1, 2), (2, 3)])
         with Solver(name="cadical300") as solver:
             encoder = Encoder(instance, 1, solver, preprocess(instance, 1)[0])
             encoder.ensure_horizon(2)
             no_defense = [-a for a in encoder.a.values()]
             self.assertFalse(solver.solve(assumptions=encoder.assumptions(2, 4, 4) + no_defense))
-            encoder.ensure_horizon(4)
+            encoder.ensure_horizon(3)
             no_defense = [-a for a in encoder.a.values()]
-            self.assertTrue(solver.solve(assumptions=encoder.assumptions(4, 4, 4) + no_defense))
+            self.assertTrue(solver.solve(assumptions=encoder.assumptions(3, 4, 4) + no_defense))
+            self.assertFalse(solver.solve(assumptions=encoder.assumptions(2, 4, 4) + no_defense))
             count = encoder.clauses
-            encoder.ensure_horizon(4)
+            encoder.ensure_horizon(3)
             self.assertEqual(encoder.clauses, count)
             self.assertEqual(encoder.extensions, 2)
+            encoder.close()
+
+    def test_horizon_zero_containment(self):
+        isolated = graph(2, [])
+        path = graph(2, [(0, 1)])
+        with Solver(name="cadical300") as solver:
+            encoder = Encoder(isolated, 1, solver, preprocess(isolated, 1)[0])
+            self.assertTrue(solver.solve(assumptions=encoder.assumptions(0, 1, 2)))
+            encoder.close()
+        with Solver(name="cadical300") as solver:
+            encoder = Encoder(path, 1, solver, preprocess(path, 1)[0])
+            self.assertFalse(solver.solve(assumptions=encoder.assumptions(0, 2, 2)))
             encoder.close()
 
     def test_fixed_actions_match_simulator(self):
@@ -86,7 +99,7 @@ class SATTests(unittest.TestCase):
             with Solver(name="cadical300") as solver:
                 encoder = Encoder(instance, d, solver, preprocess(instance, d)[0])
                 previous = [False] * (n + 1)
-                for t in range(1, n + 1):
+                for t in range(0, n + 1):
                     encoder.ensure_horizon(t)
                     optimum = brute_force(instance, d, t)
                     current = []
@@ -150,6 +163,26 @@ class SATTests(unittest.TestCase):
         self.assertEqual(first_unsat[0], lower)
         self.assertEqual(best.k, final_lower)
         self.assertGreaterEqual(stats["number_of_horizon_extensions"], 2)
+
+    def test_pareto_dominance_uses_one_strict_coordinate(self):
+        early = Solution((), frozenset({0}), frozenset(), 1)
+        later_same_k = Solution((), frozenset({0}), frozenset(), 2)
+        same_time_more_burned = Solution((), frozenset({0, 1}), frozenset(), 1)
+        self.assertTrue(dominates(early, later_same_k))
+        self.assertTrue(dominates(early, same_time_more_burned))
+        self.assertFalse(dominates(early, Solution((), frozenset({0}), frozenset(), 1)))
+
+    def test_next_horizon_always_advances(self):
+        self.assertEqual(next_horizon(0, 10), 1)
+        self.assertEqual(next_horizon(2, 10), 4)
+        self.assertEqual(next_horizon(7, 10), 10)
+
+    def test_initial_horizon_scales_and_rounds_half_up(self):
+        self.assertEqual(initial_horizon(1, 10), 2)
+        self.assertEqual(initial_horizon(3, 10), 5)
+        self.assertEqual(initial_horizon(8, 10), 10)
+        self.assertEqual(initial_horizon(0, 10), 0)
+        self.assertEqual(initial_horizon(2, 10, factor=2.0), 4)
 
     def test_all_graphs_up_to_four(self):
         for n in range(1, 5):
