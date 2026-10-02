@@ -11,6 +11,14 @@ lính cứu hỏa. Một dòng CSV tương ứng với một lần chạy; JSON 
 | `status` | `OPTIMAL` khi đã chứng minh tối ưu; `FEASIBLE` khi có incumbent nhưng dừng do timeout; `ERROR` khi worker hoặc kiểm tra cuối gặp lỗi, hoặc hết giờ trước incumbent. |
 | `termination` | Lý do kết thúc: thường là `PROVEN`, `TIME_LIMIT`, `TIME_LIMIT_NO_INCUMBENT`, `WORKER_ERROR`, `WORKER_EXIT` hoặc `FINAL_VALIDATION_ERROR`. |
 | `initial_horizon_factor` | Hệ số $c$ dùng để khởi tạo $T_0$ từ containment time heuristic; mặc định $1.5$. |
+| `horizon_growth_factor` | Hệ số $g$ tăng horizon sau UNSAT chưa đủ chứng nhận; mặc định 2. |
+| `initial_t` | Horizon SAT khởi tạo sau heuristic, dùng ceiling và chặn tại certification horizon. |
+| `t_old_safe`, `t_max` | Cận cũ $\lceil n/D\rceil$ trong dữ liệu JSON/CSV; `t_max` là alias tương thích, không điều khiển search. Không in trên log tiến trình. |
+| `t_struct` | Cận cấu trúc $\lceil(n-|B|)/(D+1)\rceil$. |
+| `t_from_ub` | Cận incumbent $U-|B|$. |
+| `t_from_lb` | Cận lower bound $\lfloor(n-L)/D\rfloor+1$. |
+| `t_cert` | Minimum của ba cận mới; UNSAT tại $T\ge t_{\mathrm{cert}}$ đủ chứng nhận tối ưu. |
+| `max_encoded_t` | Layer lớn nhất thực sự được encode trong dữ liệu JSON/CSV; có thể lớn hơn certification horizon sau khi UB giảm. Không in trên log tiến trình. |
 | `best_k` | Số đỉnh cháy của incumbent tốt nhất, ký hiệu $K$. |
 | `saved` | Số đỉnh được cứu: $n-K$. |
 | `lower_bound` | Cận dưới $L$ cho số đỉnh cháy tối ưu. |
@@ -54,7 +62,8 @@ CSV dùng một hàng cho mỗi lần chạy, các trường gồm:
 
 | Nhóm | Cột |
 | --- | --- |
-| Định danh/cấu hình | `instance`, `firefighters`, `initial_horizon_factor` |
+| Định danh/cấu hình | `instance`, `firefighters`, `initial_horizon_factor`, `horizon_growth_factor` |
+| Horizon | `initial_t`, `t_old_safe`, `t_struct`, `t_from_ub`, `t_from_lb`, `t_cert`, `max_encoded_t` |
 | Kết quả | `status`, `termination`, `best_k`, `saved`, `lower_bound`, `upper_bound`, `gap_abs`, `gap_rel` |
 | Thời gian | `elapsed_total`, `solve_time`, `final_validation_time`, `encoding_time`, `sat_time` |
 | Kiểm tra cuối | `containment_semantics`, `incumbent_horizon`, `final_validation`, `reason`, `error` |
@@ -89,6 +98,54 @@ seed, ngân sách heuristic và phiên bản thư viện. `pareto_frontier` có 
 khi portfolio heuristic đã chạy; mỗi phần tử có containment time, $K$ và schedule.
 Trường không áp dụng hoặc không có do worker dừng sớm có thể vắng mặt trong JSON;
 CSV để trống các trường thiếu.
+
+## Đọc log tiến trình
+
+Mỗi log có timestamp UTC, tên instance và nhãn loại sự kiện. Chương trình chỉ in
+khi checkpoint đổi trạng thái, không in heartbeat theo chu kỳ.
+
+| Nhãn | Ý nghĩa |
+| --- | --- |
+| `[HEURISTIC]` | Heuristic tạo hoặc cải thiện incumbent. `UB` là số đỉnh cháy của nghiệm đó. |
+| `[PREPROCESS]` | Preprocessing cập nhật lower bound $L$. |
+| `[HORIZON_BOUND]` | In các cận horizon sau preprocessing/heuristic hoặc khi $L,U$ đổi. |
+| `[SAT_QUERY]` | Query $F(T,U-1)$ đã được dựng và sắp giải. `SAT calls` đã tăng, nhưng kết quả query chưa được tính. |
+| `[SAT]` | Query trước đó trả SAT và tìm incumbent mới; `UB` giảm. |
+| `[UNSAT]` | Query trả UNSAT; xem `certifying` để biết nó đã chứng minh tối ưu chưa. |
+
+Ví dụ:
+
+```text
+[... ] case.in [HORIZON_BOUND]: LB=5 UB=42 structural=25 from_ub=41 from_lb=46 cert=25
+[... ] case.in [SAT_QUERY]: LB=5 UB=42 query_T=8 query=K<=41 SAT calls=1 (SAT=0, UNSAT=0)
+[... ] case.in [UNSAT]: LB=5 UB=42 query_T=8 query=K<=41 next_T=16 T_cert=25 certifying=false status=FEASIBLE SAT calls=1 (SAT=0, UNSAT=1)
+```
+
+Ở dòng cận, certification là minimum của `structural`, `from_ub` và `from_lb`:
+$\min(25,41,46)=25$. Query bắt đầu tại $T=8$ để hỏi có schedule contained
+không muộn hơn vòng 8 với tối đa 41 đỉnh cháy hay không. UNSAT tại vòng 8 chưa đủ
+chứng nhận tối ưu, nên $L$ giữ nguyên và bước tiếp theo là vòng 16. Nếu UNSAT tại
+$T\ge T_{\mathrm{cert}}$, `certifying=true`; khi đó query đã loại mọi nghiệm tốt
+hơn incumbent và solver kết luận tối ưu.
+
+`query_T` là horizon của SAT call gần nhất. `next_T` chỉ xuất hiện khi UNSAT chưa
+chứng nhận và thuật toán mở rộng horizon. Log không in horizon đang chọn trước query,
+cận cũ `old`, hoặc layer lớn nhất đã encode; các trường này vẫn có trong JSON/CSV.
+
+`SAT calls` đếm query đã bắt đầu. `SAT`/`UNSAT` trong ngoặc đếm query đã hoàn tất;
+vì thế ngay tại `[SAT_QUERY]`, tổng hai số này có thể thấp hơn số calls. Query đang
+chạy khi hết giờ không được tính là UNSAT. `elapsed` là thời gian wall-clock từ lúc
+parent bắt đầu, không gồm final validation.
+
+`old` là cận chẩn đoán cũ $\lceil n/D\rceil$. `structural`, `from_ub` và `from_lb`
+lần lượt là ba cận certification; `cert` là minimum hiện tại. Các cận này được
+tính lại sau khi $L$ hoặc $U$ đổi. Riêng trong dòng `[UNSAT]`, `T_cert` là giá trị
+đã dùng để đánh giá query đó; JSON giữ nó trong `query_t_cert`. JSON `t_cert` là
+giá trị hiện hành và có thể nhỏ hơn sau khi cập nhật cận.
+
+Nếu tiến trình kết thúc với `status=FEASIBLE`, `best_k=upper_bound` vẫn đến từ
+schedule incumbent. Final validation kiểm tra schedule sau khi search kết thúc;
+chỉ khi `final_validation=PASSED` thì schedule được xác nhận khả thi.
 
 ## Ví dụ đọc một kết quả
 

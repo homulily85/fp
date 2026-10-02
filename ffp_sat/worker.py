@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pysat.solvers import Solver
 
 from .heuristic import portfolio, threat
+from .horizon import compute_horizon_bounds, initial_horizon
 from .instance import read_instance
 from .preprocess import preprocess
 from .result import make_result
@@ -29,11 +30,11 @@ def worker(connection, path, firefighters, config, started, deadline):
         n_clauses=0,
         number_of_horizon_extensions=0,
         number_of_incumbent_improvements=0,
+        max_encoded_t=0,
     )
     latest = None
     solver = None
     try:
-        solver = Solver(name=config["solver"])
         config = dict(
             config,
             versions={name: importlib.metadata.version(name) for name in ("python-sat", "networkx", "ruff")},
@@ -41,7 +42,6 @@ def worker(connection, path, firefighters, config, started, deadline):
         start = time.monotonic()
         instance = read_instance(path)
         stats["read_time"] = time.monotonic() - start
-        stats["t_max"] = (instance.n + firefighters - 1) // firefighters
         # Send a cheap verified incumbent before portfolio or SAT construction.
         start = time.monotonic()
         heuristic_deadline = min(deadline, start + config["heuristic_budget"])
@@ -51,15 +51,25 @@ def worker(connection, path, firefighters, config, started, deadline):
 
         def publish(solution, lb, metrics, source=None):
             nonlocal latest
+            event = source or metrics.get("update_source", "HEURISTIC")
+            if event in ("HEURISTIC", "PREPROCESS"):
+                bounds = compute_horizon_bounds(
+                    instance.n, len(instance.initial_fire), firefighters, lb, solution.k
+                )
+                metrics.update(bounds.stats())
+                metrics["current_t"] = initial_horizon(
+                    solution.containment_time, bounds.certification,
+                    config.get("initial_horizon_factor", 1.5),
+                )
+                metrics["initial_t"] = metrics["current_t"]
             metrics = dict(
                 metrics,
-                update_source=source or metrics.get("update_source", "HEURISTIC"),
+                update_source=event,
                 snapshot_elapsed=time.monotonic() - started,
             )
             latest = make_result(instance, firefighters, solution, lb, metrics, config)
             connection.send(("CHECKPOINT", latest))
 
-        stats["current_t"] = min(best.containment_time, stats["t_max"])
         publish(best, lower, stats)
         start = time.monotonic()
         distance, lower = preprocess(instance, firefighters)
@@ -83,6 +93,7 @@ def worker(connection, path, firefighters, config, started, deadline):
             ]
             publish(best, lower, stats)
         if lower < best.k and time.monotonic() < deadline:
+            solver = Solver(name=config["solver"])
             best, lower = search(
                 instance,
                 firefighters,
@@ -95,6 +106,7 @@ def worker(connection, path, firefighters, config, started, deadline):
                 stats,
                 solver_instance=solver,
                 initial_horizon_factor=config.get("initial_horizon_factor", 1.5),
+                horizon_growth_factor=config.get("horizon_growth_factor", 2.0),
             )
         result = make_result(instance, firefighters, best, lower, stats, config)
         connection.send(("FINAL", result))
@@ -175,6 +187,7 @@ def run(path, firefighters, config, target=worker):
     latest = final = None
     timed_out = False
     logged_state = None
+    logged_bounds = None
     process.start()
     sender.close()
     try:
@@ -209,7 +222,23 @@ def run(path, firefighters, config, target=worker):
                         logged_state = state
                         timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
                         source = latest.get("update_source", "STATUS")
-                        shown_t = latest.get("query_horizon", latest.get("current_t"))
+                        bounds_state = tuple(latest.get(k) for k in (
+                            "lower_bound", "upper_bound", "t_old_safe", "t_struct",
+                            "t_from_ub", "t_from_lb", "t_cert",
+                        ))
+                        if latest.get("t_cert") is not None and (
+                            bounds_state != logged_bounds or source in ("PREPROCESS", "HEURISTIC")
+                        ):
+                            logged_bounds = bounds_state
+                            print(
+                                f"[{timestamp}] {Path(path).name} [HORIZON_BOUND]: "
+                                f"LB={latest['lower_bound']} UB={latest['upper_bound']} "
+                                f"structural={latest['t_struct']} "
+                                f"from_ub={latest['t_from_ub']} from_lb={latest['t_from_lb']} "
+                                f"cert={latest['t_cert']}",
+                                file=sys.stderr, flush=True,
+                            )
+                        shown_t = latest.get("query_horizon")
                         next_t = latest.get("current_t")
                         details = (
                             f" query=K<={latest['current_k_bound']}"
@@ -218,10 +247,16 @@ def run(path, firefighters, config, target=worker):
                         )
                         if source == "UNSAT" and next_t != shown_t:
                             details += f" next_T={next_t}"
+                        if source == "UNSAT":
+                            details += (
+                                f" T_cert={latest.get('query_t_cert', latest.get('t_cert'))} "
+                                f"certifying={str(latest.get('certifying', False)).lower()} "
+                                f"status={latest.get('status')}"
+                            )
                         print(
                             f"[{timestamp}] {Path(path).name} [{source}]: "
                             f"LB={latest.get('lower_bound')} UB={latest.get('upper_bound')} "
-                            f"T={shown_t}{details} "
+                            f"{f'query_T={shown_t}' if shown_t is not None else ''}{details} "
                             f"SAT calls={latest.get('sat_calls', 0)} "
                             f"(SAT={latest.get('sat_results', 0)}, UNSAT={latest.get('unsat_results', 0)}) "
                             f"elapsed={time.monotonic() - started:.1f}s",
@@ -290,6 +325,7 @@ def run(path, firefighters, config, target=worker):
         result.setdefault("instance", str(path))
         result.setdefault("firefighters", firefighters)
         result.setdefault("initial_horizon_factor", config.get("initial_horizon_factor", 1.5))
+        result.setdefault("horizon_growth_factor", config.get("horizon_growth_factor", 2.0))
         result.setdefault("config", config)
         result.setdefault("containment_semantics", "stable_state_after_round")
         result.setdefault("reason", None)

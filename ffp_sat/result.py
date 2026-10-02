@@ -12,6 +12,7 @@ def make_result(instance, firefighters, best, lower, stats, config):
         m=instance.m,
         firefighters=firefighters,
         initial_horizon_factor=config.get("initial_horizon_factor", 1.5),
+        horizon_growth_factor=config.get("horizon_growth_factor", 2.0),
         status="OPTIMAL" if lower == upper else "FEASIBLE",
         termination="PROVEN" if lower == upper else "TIME_LIMIT",
         best_k=upper,

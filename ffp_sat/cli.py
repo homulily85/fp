@@ -20,12 +20,20 @@ def positive_float(value):
     return number
 
 
+def horizon_factor(value):
+    number = positive_float(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("Horizon factor must be at least 1")
+    return number
+
+
 def add_options(parser):
     parser.add_argument("--time-limit", type=positive_float, default=600.0)
     parser.add_argument("--solver", default="cadical300")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--heuristic-budget", type=positive_float)
-    parser.add_argument("--initial-horizon-factor", type=positive_float, default=1.5)
+    parser.add_argument("--initial-horizon-factor", type=horizon_factor, default=1.5)
+    parser.add_argument("--horizon-growth-factor", type=horizon_factor, default=2.0)
 
 
 def configuration(args):
@@ -37,6 +45,7 @@ def configuration(args):
         if args.heuristic_budget is not None
         else min(5.0, 0.05 * args.time_limit),
         initial_horizon_factor=args.initial_horizon_factor,
+        horizon_growth_factor=args.horizon_growth_factor,
     )
 
 

@@ -187,12 +187,19 @@ class ProcessTests(unittest.TestCase):
         self.assertEqual(result["termination"], "WORKER_EXIT")
 
     def test_backend_and_cli_errors(self):
-        result = run("unused", 1, dict(time_limit=2, solver="missing-backend", heuristic_budget=0.01, seed=0))
+        result = run(
+            "dataset/50_ep0.1_0_gilbert_1.in", 1,
+            dict(time_limit=2, solver="missing-backend", heuristic_budget=0.001, seed=0),
+        )
         self.assertEqual(result["status"], "ERROR")
         self.assertEqual(result["termination"], "WORKER_ERROR")
-        self.assertIsNone(result["schedule"])
+        self.assertEqual(result["final_validation"], "PASSED")
         self.assertIn("missing-backend", result["error"])
-        for extra in (["--firefighters", "0"], ["--firefighters", "1", "--time-limit", "nan"]):
+        for extra in (
+            ["--firefighters", "0"], ["--firefighters", "1", "--time-limit", "nan"],
+            ["--firefighters", "1", "--initial-horizon-factor", "0.5"],
+            ["--firefighters", "1", "--horizon-growth-factor", "inf"],
+        ):
             process = subprocess.run(
                 [sys.executable, "-m", "ffp_sat", "unused", *extra], capture_output=True, timeout=5
             )
@@ -224,6 +231,12 @@ class ProcessTests(unittest.TestCase):
             self.assertIn("[PREPROCESS]", result.stderr)
             self.assertIn("[SAT_QUERY]", result.stderr)
             self.assertIn("[UNSAT]", result.stderr)
+            self.assertIn("[HORIZON_BOUND]", result.stderr)
+            self.assertIn("query_T=", result.stderr)
+            self.assertIn("certifying=true", result.stderr)
+            self.assertNotIn("old=", result.stderr)
+            self.assertNotIn("current_T=", result.stderr)
+            self.assertNotIn("max_encoded_T=", result.stderr)
             self.assertNotIn("starting worker", result.stderr)
 
     def test_cli_and_batch(self):
@@ -251,6 +264,10 @@ class ProcessTests(unittest.TestCase):
             parsed = json.loads(output.read_text())
             self.assertIn(parsed["status"], ("OPTIMAL", "FEASIBLE"))
             self.assertEqual(parsed["final_validation"], "PASSED")
+            self.assertEqual(parsed["initial_horizon_factor"], 1.5)
+            self.assertEqual(parsed["horizon_growth_factor"], 2.0)
+            self.assertEqual(parsed["t_max"], parsed["t_old_safe"])
+            self.assertLessEqual(parsed["max_encoded_t"], parsed["t_struct"])
             self.assertLess(parsed["elapsed_total"], 2)
             dataset = root / "data"
             dataset.mkdir()

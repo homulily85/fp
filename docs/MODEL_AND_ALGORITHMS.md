@@ -157,16 +157,32 @@ $$
 Ít nhất $|B|$ đỉnh cháy ban đầu; vòng đầu bảo vệ được tối đa $D$ láng giềng đang
 bị đe dọa. Bound này không phụ thuộc vào UNSAT ở horizon ngắn.
 
-Horizon tối đa dùng trong v1:
+Certification horizon cho query cải thiện incumbent:
 
 $$
-T_{\max}=\left\lceil\frac{|V|}{D}\right\rceil
+\begin{aligned}
+T_{\mathrm{old}}&=\left\lceil\frac{n}{D}\right\rceil,\\
+T_{\mathrm{struct}}&=\left\lceil\frac{n-|B|}{D+1}\right\rceil,\\
+T_{\mathrm{UB}}&=U-|B|,\\
+T_{\mathrm{LB}}&=\left\lfloor\frac{n-L}{D}\right\rfloor+1,\\
+T_{\mathrm{cert}}&=\min(T_{\mathrm{struct}},T_{\mathrm{UB}},T_{\mathrm{LB}}).
+\end{aligned}
 $$
 
-Tính chất cần dùng là tồn tại ít nhất một nghiệm tối ưu được contained không muộn
-hơn $T_{\max}$. Không khẳng định mọi chiến lược đều contained trước mốc đó. Vì vậy,
-UNSAT cho $F(T_{\max},U-1)$ chứng minh incumbent với $U$ đỉnh cháy là tối ưu toàn
-cục.
+Chọn nghiệm tối ưu canonical bảo vệ đủ $D$ đỉnh ở các vòng trước vòng cuối. Việc
+bảo vệ thêm đỉnh untouched không làm tăng số đỉnh cháy. Nếu còn ít hơn $D$ đỉnh
+untouched thì bảo vệ hết sẽ contained ngay, nên vòng đó là vòng cuối.
+
+Mỗi vòng trước vòng cuối cũng phải làm cháy ít nhất một đỉnh mới. Sau $T-1$ vòng,
+có ít nhất $|B|+(D+1)(T-1)$ đỉnh cháy hoặc defended, và còn ít nhất một đỉnh
+untouched. Suy ra cận cấu trúc. Với nghiệm cải thiện, $K^*\le U-1$ và
+$K^*\ge |B|+T-1$, suy ra cận UB. Các đỉnh defended rời nhau với tập cháy cuối;
+$L+D(T-1)\le n$ cho cận LB. Cả ba cận áp dụng cho cùng một nghiệm tối ưu canonical.
+
+Cận cũ chỉ dùng chẩn đoán. Các cận mới dùng số nguyên và được tính lại khi $U$ hoặc
+$L$ thay đổi. Nếu một nghiệm tốt hơn tồn tại thì có nghiệm tối ưu contained không
+muộn hơn $T_{\mathrm{cert}}$. Vì vậy UNSAT cho $F(T,U-1)$ khi
+$T\ge T_{\mathrm{cert}}$ chứng minh incumbent tối ưu.
 
 ## Heuristic tạo incumbent
 
@@ -205,14 +221,16 @@ Worker giữ một solver CaDiCaL xuyên suốt. Gọi $U$ là $K$ incumbent, $L
 bound và $T$ là horizon hiện tại. Khởi tạo:
 
 $$
-T_0=\min\left(T_{\max},\left\lfloor cT_{\mathrm{inc}}+0.5\right\rfloor\right),
+T_0=\min\left(T_{\mathrm{cert}},\left\lceil cT_{\mathrm{inc}}\right\rceil\right),
 \qquad c=1.5
 $$
 
-Trong đó $T_{\mathrm{inc}}$ là containment time của incumbent; làm tròn gần nhất,
-trường hợp đúng nửa làm tròn lên. Có thể đổi $c$ bằng tùy chọn
-`--initial-horizon-factor`; giá trị được lưu trong JSON/CSV. Nếu $L=U$, kết quả đã
-tối ưu.
+Trong đó $T_{\mathrm{inc}}$ là containment time của incumbent. Dùng ceiling; ví dụ
+$T_{\mathrm{inc}}=7$ cho $T_0=11$ nếu certification horizon đủ lớn. Tùy chọn
+`--initial-horizon-factor` điều khiển $c\ge1$. Tùy chọn `--horizon-growth-factor`
+điều khiển $g\ge1$, mặc định $g=2$. Hai hệ số chỉ quyết định hiệu năng và được ghi
+trong JSON/CSV. Nếu $L=U$, trả tối ưu trước khi tạo solver; trạng thái đầu contained
+được trả tại $T=0$.
 
 Nếu chưa, query tuần tự từ UB:
 
@@ -221,10 +239,11 @@ F(T,U-1)=\mathrm{SAT}?
 $$
 
 - SAT: giải mã schedule và cập nhật $U$ bằng số đỉnh cháy trong model; tiếp tục thử
-  $F(T,U-1)$ ở cùng horizon.
-- UNSAT khi $T<T_{\max}$: không tăng lower bound toàn cục. Thử horizon kế tiếp
-  $T'=\min(T_{\max},\max(T+1,2T))$.
-- UNSAT khi $T=T_{\max}$: đặt $L=U$ và kết luận `OPTIMAL`.
+  $F(T,U-1)$ ở cùng horizon sau khi tính lại certification horizon. Không giảm $T$
+  khi cận co lại và không rebuild solver.
+- UNSAT khi $T<T_{\mathrm{cert}}$: không tăng lower bound toàn cục. Thử horizon
+  $T'=\min(T_{\mathrm{cert}},\max(T+1,\lceil gT\rceil))$.
+- UNSAT khi $T\ge T_{\mathrm{cert}}$: đặt $L=U$ và kết luận `OPTIMAL`.
 - Timeout: trả checkpoint mới nhất. `best_k=upper_bound=U` là số đỉnh cháy của
   schedule incumbent đã tìm được; query đang chạy không được xem là UNSAT.
 

@@ -31,9 +31,9 @@ riêng, nhưng parent vẫn áp deadline chung. Seed điều khiển RandomizedT
 cam kết cùng số SAT calls khi chạy với timeout trên các máy khác nhau.
 
 Horizon SAT đầu tiên mặc định là
-$T_0=\min(T_{\max},\operatorname{round}(1.5T_{\mathrm{inc}}))$; phép làm tròn dùng
-quy tắc nửa lên. Có thể đổi hệ số bằng `--initial-horizon-factor` (số dương); hệ số
-được ghi trong JSON và CSV.
+$T_0=\min(T_{\mathrm{cert}},\lceil1.5T_{\mathrm{inc}}\rceil)$. Có thể đổi hệ số
+$c\ge1$ bằng `--initial-horizon-factor`. `--horizon-growth-factor` điều khiển hệ số
+tăng $g\ge1$, mặc định 2. Các hệ số được ghi trong JSON và CSV.
 
 stdout in summary. stderr chỉ ghi khi có cập nhật trạng thái, kèm nguồn `HEURISTIC`,
 `PREPROCESS`, `SAT_QUERY`, `SAT` hoặc `UNSAT`; `SAT_QUERY` có horizon và objective bound, các dòng `SAT`/`UNSAT` ghi kết quả truy vấn tương ứng.
@@ -112,17 +112,17 @@ $$
 L=|B|+\max\left(0,|N(B)\setminus B|-D\right)
 $$
 
-Horizon dùng trong v1 là $T_{\max}=\lceil |V|/D\rceil$. Tính chất cần dùng là tồn tại
-ít nhất một nghiệm tối ưu được contained không muộn hơn mốc này; không khẳng định
-mọi chiến lược đều dừng trước đó. Định nghĩa containment là trạng thái cuối không
+Horizon chứng nhận là $T_{\mathrm{cert}}=\min(\lceil(n-|B|)/(D+1)\rceil,
+U-|B|,\lfloor(n-L)/D\rfloor+1)$, được tính lại khi incumbent cải thiện. Cận cũ
+$\lceil n/D\rceil$ chỉ phục vụ chẩn đoán. Định nghĩa containment là trạng thái cuối không
 còn cạnh từ đỉnh burned tới đỉnh untouched, nên trường hợp ban đầu đã ổn định có
 containment time bằng $0$. Xem [mô hình và thuật toán](docs/MODEL_AND_ALGORITHMS.md)
 để biết đầy đủ công thức.
 
 Ở mọi horizon, query tuần tự $F(T,U-1)$ từ incumbent UB. SAT cập nhật UB theo số
-đỉnh cháy của model; UNSAT ở horizon ngắn chỉ tăng $T$, không tăng LB. Tại
-$T_{\max}$, UNSAT với $K\le U-1$ chứng minh incumbent UB là tối ưu, vì horizon này
-bao quát nghiệm tối ưu toàn cục. Luôn giữ $L\le K^*\le U$; chỉ trả OPTIMAL khi $L=U$.
+đỉnh cháy của model; UNSAT ở horizon ngắn chỉ tăng $T$, không tăng LB. Khi
+$T\ge T_{\mathrm{cert}}$, UNSAT chứng minh incumbent tối ưu và đặt $L=U$.
+Horizon không giảm khi cận co lại. Luôn giữ $L\le K^*\le U$; chỉ trả OPTIMAL khi $L=U$.
 
 V1 không loại bỏ thành phần rời rạc hoặc thêm symmetry breaking. Với D=1 và graph
 lớn, horizon cao có thể tạo rất nhiều clause; timeout trả incumbent và bounds,

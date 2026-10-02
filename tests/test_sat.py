@@ -117,7 +117,7 @@ class SATTests(unittest.TestCase):
         bounds = []
 
         def record(solution, lb, metrics):
-            bounds.append((lb, metrics["current_t"]))
+            bounds.append((lb, metrics.get("certifying", False), metrics.get("update_source")))
             if metrics.get("update_source") == "SAT_QUERY":
                 self.assertEqual(metrics["current_k_bound"], solution.k - 1)
 
@@ -137,13 +137,15 @@ class SATTests(unittest.TestCase):
         checked = simulate(instance, d, result.schedule)
         self.assertEqual((checked.k, checked.burned), (result.k, result.burned))
         self.assertLessEqual(checked.containment_time, result.containment_time)
-        maximum = (instance.n + d - 1) // d
-        for lb, t in bounds:
-            if t < maximum:
+        for lb, certifying, source in bounds:
+            if source != "UNSAT" or not certifying:
                 self.assertEqual(lb, lower)
 
     def test_short_unsat_does_not_raise_global_lower_bound(self):
-        instance = graph(6, [(0, 1), (0, 5), (1, 3), (1, 4), (2, 4), (2, 5), (4, 5)])
+        instance = graph(8, [
+            (0, 1), (0, 2), (0, 4), (0, 6), (1, 4), (1, 7), (2, 3),
+            (2, 5), (2, 7), (3, 7), (4, 5), (4, 7), (6, 7),
+        ])
         distance, lower = preprocess(instance, 1)
         initial = threat(instance, 1)
         events = []
@@ -158,6 +160,7 @@ class SATTests(unittest.TestCase):
             time.monotonic() + 5,
             lambda s, lb, st: events.append((lb, st["current_t"], st["unsat_results"])),
             stats,
+            initial_horizon_factor=1.0,
         )
         first_unsat = next(event for event in events if event[2] == 1)
         self.assertEqual(first_unsat[0], lower)
@@ -177,12 +180,13 @@ class SATTests(unittest.TestCase):
         self.assertEqual(next_horizon(2, 10), 4)
         self.assertEqual(next_horizon(7, 10), 10)
 
-    def test_initial_horizon_scales_and_rounds_half_up(self):
+    def test_initial_horizon_scales_with_ceiling(self):
         self.assertEqual(initial_horizon(1, 10), 2)
         self.assertEqual(initial_horizon(3, 10), 5)
         self.assertEqual(initial_horizon(8, 10), 10)
         self.assertEqual(initial_horizon(0, 10), 0)
         self.assertEqual(initial_horizon(2, 10, factor=2.0), 4)
+        self.assertEqual(initial_horizon(3, 10, factor=1.25), 4)
 
     def test_all_graphs_up_to_four(self):
         for n in range(1, 5):
