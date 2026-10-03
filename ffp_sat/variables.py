@@ -27,3 +27,10 @@ class VarManager:
         if self.names is not None:
             for variable in range(previous + 1, top + 1):
                 self.names[variable] = f"totalizer_aux_{variable}"
+
+    def new_aux(self, name=None):
+        self.top += 1
+        self.auxiliary += 1
+        if self.names is not None:
+            self.names[self.top] = name or f"aux_{self.top}"
+        return self.top

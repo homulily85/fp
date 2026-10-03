@@ -119,6 +119,7 @@ def search(
                         "probe_setup_time_seconds"
                     ]
                     propagation.update(horizon=horizon, k_bound=bound, assumption_count=len(assumptions))
+                    propagation["objective"] = dict(encoder.current_objective)
                     stats.setdefault("debug_profile", {}).setdefault("queries", []).append(propagation)
                     if time.monotonic() >= deadline:
                         propagation["solve_status"] = "NOT_RUN_TIME_LIMIT"

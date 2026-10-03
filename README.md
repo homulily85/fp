@@ -40,7 +40,7 @@ $c\ge1$ bằng `--initial-horizon-factor`. `--horizon-growth-factor` điều khi
 `<instance>_D<D>_seed<seed>.cnf` là DIMACS thuần, còn file cùng tên có hậu tố
 `.named.cnf` có các dòng chú giải `c var <id> <name>`. Clause vẫn giữ dạng DIMACS,
 nên solver khác đọc được; bảng tên ánh xạ ID sang `b[v,t]`, `d[v,t]`, `a[v,t]`,
-`h[t]` hoặc `totalizer_aux_<id>`. File chứa assumptions của query đầu tiên dưới dạng
+`h[t]`, `c[T,i,j]` hoặc `totalizer_aux_<id>`. File chứa assumptions của query đầu tiên dưới dạng
 unit clauses để biểu diễn một bài toán SAT độc lập. Nếu preprocessing/heuristic đã
 chứng minh tối ưu và không chạy SAT query thì không tạo file. Batch đặt tên file theo
 instance, D và seed để tách các lượt chạy.
@@ -119,8 +119,11 @@ Encoding có $b_{v,t}$ (cháy), $d_{v,t}$ (đã bảo vệ), $a_{v,t}$ (bảo v�
 Monotonicity,
 loại trừ cháy–phòng vệ, spread và clause cấm cháy tự phát mô tả chính xác động học.
 Khoảng cách BFS cấm cháy trước thời điểm lửa có thể tới. Mỗi layer có totalizer
-firefighter với bound cố định. Objective totalizer được tạo lazily; bound objective
-và containment activation được truyền bằng assumptions. Khi đổi horizon chỉ nối
+firefighter với bound cố định. Objective được tạo riêng cho mỗi horizon được query: dùng saved-side AtLeast
+counter khi $K>n//2$, burned-side `ITotalizer` khi $K\le n//2$. Saved counter chỉ
+nối thêm column khi threshold $n-K$ tăng. Containment cũng được tạo lazily,
+đúng một activation và $2m$ clause cho mỗi horizon được chuẩn bị để query. Bound
+objective và containment activation được truyền bằng assumptions. Khi đổi horizon chỉ nối
 layer, không rebuild solver hay giữ containment cũ bằng unit clause.
 
 Lower bound ban đầu:

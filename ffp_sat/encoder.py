@@ -2,6 +2,7 @@ from collections import Counter
 from pathlib import Path
 from statistics import fmean
 
+from .objective import ObjectiveManager
 from .totalizer import AtMost
 from .variables import VarManager
 
@@ -10,7 +11,8 @@ class Encoder:
     DEBUG_GROUPS = (
         "initial", "burn_monotonic", "defense_monotonic", "exclusivity",
         "action_definition", "fire_spread", "no_spontaneous_burning",
-        "firefighter_totalizer", "containment", "objective_totalizer", "preprocessing",
+        "firefighter_totalizer", "containment", "objective_totalizer", "objective_saved_counter",
+        "preprocessing",
     )
 
     def __init__(
@@ -34,12 +36,12 @@ class Encoder:
         self._no_spontaneous_lengths = [] if debug else None
         self.extensions = 0
         self.trees = []
+        self.current_objective = None
         for v in range(instance.n):
             self.b[v, 0] = self.vars.new(f"b[{v},0]")
             self.d[v, 0] = self.vars.new(f"d[{v},0]")
             self.add([self.b[v, 0] if v in instance.initial_fire else -self.b[v, 0]], "initial")
             self.add([-self.d[v, 0]], "initial")
-        self._add_containment(0)
 
     def add(self, clause, group=None):
         clause = list(clause)
@@ -95,16 +97,20 @@ class Encoder:
             bound = tree.assumption(self.firefighters)
             if bound is not None:
                 self.add([bound], "firefighter_totalizer")
-            self._add_containment(t)
         self.horizon = target
 
-    def _add_containment(self, t):
+    def ensure_containment(self, t):
+        if not 0 <= t <= self.horizon:
+            raise ValueError("Containment requires an existing horizon")
+        if t in self.h:
+            return self.h[t]
         self.h[t] = self.vars.new(f"h[{t}]", activation=True)
         # A contained state has no edge from a burned vertex to an untouched
         # one. Check each orientation of every undirected edge.
         for u in range(self.instance.n):
             for v in sorted(self.instance.adjacency[u]):
                 self.add([-self.h[t], -self.b[u, t], self.b[v, t], self.d[v, t]], "containment")
+        return self.h[t]
 
     def export_dimacs(self, prefix, assumptions, horizon, burned_bound):
         """Write this query's cumulative CNF, including its active assumptions."""
@@ -135,17 +141,25 @@ class Encoder:
         return dict(raw=str(raw_path), named=str(named_path))
 
     def assumptions(self, t, k, upper):
+        if k < 0:
+            raise ValueError("Negative bound is infeasible")
+        activation = self.ensure_containment(t)
         if t not in self.objectives:
-            aux_before = self.vars.auxiliary
-            tree = AtMost([self.b[v, t] for v in range(self.instance.n)], upper, self.vars)
-            if self._debug_groups is not None:
-                self._debug_groups["objective_totalizer"]["auxiliary_vars"] += self.vars.auxiliary - aux_before
-            self.objectives[t] = tree
-            self.trees.append(tree)
-            for clause in tree.clauses:
-                self.add(clause, "objective_totalizer")
-        bound = self.objectives[t].assumption(k)
-        return [self.h[t]] + ([bound] if bound is not None else [])
+            self.objectives[t] = ObjectiveManager(
+                [self.b[v, t] for v in range(self.instance.n)], self.vars, self.add, t
+            )
+        objective = self.objectives[t]
+        aux_before = self.vars.auxiliary
+        bound = objective.assumption(k)
+        self.current_objective = dict(objective.current)
+        if self._debug_groups is not None and bound is not None:
+            group = "objective_saved_counter" if objective.current["side"] == "saved" else "objective_totalizer"
+            self._debug_groups[group]["auxiliary_vars"] += self.vars.auxiliary - aux_before
+        return (
+            [activation]
+            + [-self.h[old] for old in sorted(self.h) if old != t]
+            + ([bound] if bound is not None else [])
+        )
 
     def decode(self, model, t):
         positive = {v for v in model if v > 0}
@@ -194,6 +208,15 @@ class Encoder:
             "clauses": clauses,
             "total_clauses": total_clauses,
             "totalizer_clause_ratio": totalizers / total_clauses if total_clauses else 0.0,
+            "cardinality_clause_ratio": (
+                totalizers + clauses["objective_saved_counter"]["number_of_clauses"]
+            ) / total_clauses if total_clauses else 0.0,
+            "objective": dict(self.current_objective) if self.current_objective else None,
+            "containment": {
+                "queried_horizons": sorted(self.h),
+                "activation_variables": len(self.h),
+                "number_of_clauses": clauses["containment"]["number_of_clauses"],
+            },
             "clause_length_histogram": dict(self._clause_histogram),
             "no_spontaneous_length_histogram": dict(self._no_spontaneous_histogram),
             "no_spontaneous_exact_length_histogram": {
@@ -211,3 +234,5 @@ class Encoder:
     def close(self):
         for tree in self.trees:
             tree.close()
+        for objective in self.objectives.values():
+            objective.close()

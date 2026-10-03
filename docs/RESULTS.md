@@ -86,7 +86,7 @@ metadata đầy đủ, cấu hình hay mọi thống kê; mở JSON cùng tên �
 - `sat_calls` tăng khi một query bắt đầu. `sat_results` và `unsat_results` chỉ đếm
   query đã kết thúc. Query bị dừng vì timeout không bị tính là UNSAT.
 - `n_semantic_vars` đếm biến trạng thái/action, `n_activation_vars` đếm activation
-  của containment, `n_aux_vars` đếm biến totalizer; `n_clauses` là số clause đã
+  của containment, `n_aux_vars` đếm biến totalizer và saved counter; `n_clauses` là số clause đã
   thêm vào solver.
 - `number_of_horizon_extensions` đếm số lần encoding được nối thêm layer;
   `number_of_incumbent_improvements` đếm các lần giảm $K$.
@@ -120,16 +120,34 @@ bậc đỉnh. Các percentile dùng quy ước nearest-rank.
 `auxiliary_ratio` là auxiliary/tổng. `clauses` có một mục cho mỗi loại ràng buộc:
 `initial`, `burn_monotonic`, `defense_monotonic`, `exclusivity`,
 `action_definition`, `fire_spread`, `no_spontaneous_burning`,
-`firefighter_totalizer`, `containment`, `objective_totalizer`, `preprocessing`.
+`firefighter_totalizer`, `containment`, `objective_totalizer`,
+`objective_saved_counter`, `preprocessing`.
 Mỗi mục có số clause, tổng literal, độ dài clause nhỏ nhất/lớn nhất/trung bình
-và số auxiliary variable được tạo bởi totalizer của nhóm đó. Nhóm rỗng có count 0,
+và số auxiliary variable được tạo bởi cardinality encoding của nhóm đó. Nhóm rỗng có count 0,
 độ dài min/max là null và trung bình 0.
 
 `clause_length_histogram` gom tất cả clause vào các bucket độ dài 1, 2, 3, 4–8,
 9–16 và trên 16. `no_spontaneous_length_histogram` dùng cùng bucket riêng cho
 clause cấm cháy tự phát; `no_spontaneous_exact_length_histogram` giữ độ dài chính
 xác làm key dạng chuỗi. `totalizer_clause_ratio` là tổng số clause của hai nhóm
-totalizer chia cho toàn bộ clause.
+totalizer chia cho toàn bộ clause. `cardinality_clause_ratio` tính thêm clause
+của `objective_saved_counter` vào tử số.
+
+`debug.encoding.objective` mô tả phía được chọn cho query hiện tại: `side` là
+`saved`, `burned` hoặc `none`. Saved-side có `encoding=incremental_atleast_counter`,
+`saved_threshold=n-K` và `max_saved_threshold` là threshold lớn nhất đã encode.
+Burned-side có `encoding=itotalizer` và `burned_upper_bound=K`. Trường
+`number_of_clauses` và `auxiliary_variables` của metadata này thuộc cấu trúc phía
+đang chọn tại horizon đó; các nhóm trong `clauses` là số lũy kế toàn solver, gồm
+cả các horizon hoặc phía objective đã ngừng sử dụng. Mỗi entry trong
+`debug.queries` giữ snapshot `objective` riêng. `side=none` nghĩa là bound $K\ge n$
+không cần cardinality assumption.
+
+`debug.encoding.containment` có `queried_horizons`, `activation_variables` và
+`number_of_clauses`. Đây là các horizon đã được chuẩn bị để query, không phải mọi
+layer dynamics đã encode. Mỗi horizon được chuẩn bị tạo $2m$ clauses đúng một lần;
+query có thể chưa chạy nếu deadline hết ngay sau khi dựng formula. Ví dụ với
+$m=3809$, chỉ chuẩn bị $T=9$ sẽ có một activation và 7618 containment clauses.
 
 `debug.queries` ghi profile propagation cho từng query $F(T,K)$: horizon, bound,
 số assumptions, số biến được unit propagation xác định, tổng số biến, tỷ lệ,
@@ -147,14 +165,14 @@ solver chẩn đoán tạm nạp CNF hiện tại; `debug_probe_setup_time` đo 
 solver này, còn `propagation_time` chỉ cộng thời gian gọi `propagate`. Cả hai đều
 nằm trong deadline và được báo riêng trong JSON. Vì cần giữ CNF để dựng solver chẩn
 đoán, `--debug` có thể tăng đáng kể mức dùng RAM và thời gian chạy. Khi không bật
-`--debug`, solver không giữ bản sao clause và không chạy phép propagation này.
+`--debug`, solver không giữ bản sao clause nếu không yêu cầu CNF export, và không chạy phép propagation này.
 
 Export CNF chứa các clause đã sinh đến query đầu tiên, gồm các layer incremental,
 totalizer, containment activation và assumptions query được thêm thành unit clauses.
 Do đó file standalone tương đương query đầu tiên $F(T,K)$; nó không đại diện cho các
 query sau với horizon hoặc bound khác. File `.named.cnf` vẫn là DIMACS hợp lệ: các
 dòng comment `c var <id> <name>` ánh xạ ID số sang tên biến. Biến phụ totalizer có
-tên `totalizer_aux_<id>`.
+tên `totalizer_aux_<id>`; auxiliary của saved counter có tên `c[T,i,j]`.
 
 ## Đọc log tiến trình
 

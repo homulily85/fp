@@ -32,8 +32,10 @@ Với mỗi đỉnh $v$ và thời điểm sau vòng $t$, encoding dùng:
 | $d_{v,t}$ | $v$ đã được bảo vệ trước hoặc trong vòng $t$ |
 | $a_{v,t}$ | $v$ được bảo vệ lần đầu ở vòng $t$ |
 | $h_T$ | activation literal yêu cầu containment tại horizon $T$ |
+| $c^{(T)}_{i,j}$ | auxiliary của saved counter: ít nhất $j$ saved literals đúng trong prefix dài $i$ tại horizon $T$ |
 
-Layer 0 có biến burned/defended và activation $h_0$; $a_{v,t}$ được tạo từ vòng 1.
+Layer 0 chỉ tạo biến burned/defended; $a_{v,t}$ được tạo từ vòng 1. Activation
+$h_T$ chỉ tạo khi chuẩn bị query tại $T$, kể cả $T=0$.
 Variable manager cấp ID cho biến semantic, activation và auxiliary theo một counter
 chung; `ITotalizer` nhận `top_id` hiện tại để tránh va chạm ID.
 
@@ -128,8 +130,10 @@ $$
 \neg h_T\lor\neg b_{u,T}\lor b_{v,T}\lor d_{v,T}
 $$
 
-Query SAT chỉ đưa $h_T$ hiện tại vào assumptions nên constraint containment của
-horizon cũ không áp dụng ở query mới. Cách định nghĩa này cũng dùng cho simulator
+Dynamics được nối tới horizon đang cần; containment chỉ được tạo khi horizon đó
+được chuẩn bị để query. Mỗi horizon được tạo đúng một activation và $2m$ clause.
+Query SAT đưa $h_T$ hiện tại cùng $\neg h_{\mathrm{old}}$ cho các horizon khác
+đã tạo vào assumptions, nên containment cũ không áp dụng ở query mới. Cách định nghĩa này cũng dùng cho simulator
 và heuristic. Containment time mô phỏng có thể nhỏ hơn horizon SAT.
 
 Objective là số đỉnh cháy ở horizon $T$:
@@ -138,7 +142,71 @@ $$
 \sum_{v\in V}b_{v,T}\le K
 $$
 
-Mỗi horizon có objective `ITotalizer` riêng; các bound $K$ thay đổi bằng assumptions.
+Mỗi horizon được query có một objective manager riêng. Đặt $q=n-K$ và
+$x_i=\neg b_{v_i,T}$, với vertex order cố định $v_i=i-1$. Khi $K>n//2$,
+objective tương đương:
+
+$$
+\sum_{i=1}^{n}x_i\ge q.
+$$
+
+Phía saved dùng counter incremental với các auxiliary variables:
+
+$$
+c_{i,j}\iff\sum_{r=1}^{i}x_r\ge j,
+\qquad 1\le j\le\min(i,q_{\max}).
+$$
+
+Với $1<j<i$, recurrence là:
+
+$$
+y\leftrightarrow A\lor(B\land x_i),
+\quad y=c_{i,j},\ A=c_{i-1,j},\ B=c_{i-1,j-1}.
+$$
+
+Bốn clause encode equivalence đầy đủ:
+
+$$
+(\neg A\lor y)\land
+(\neg B\lor\neg x_i\lor y)\land
+(\neg y\lor A\lor B)\land
+(\neg y\lor A\lor x_i).
+$$
+
+Boundary $c_{1,1}\leftrightarrow x_1$ dùng hai clause:
+
+$$
+(\neg c_{1,1}\lor x_1)\land(\neg x_1\lor c_{1,1}).
+$$
+
+Với $i>1$, boundary $j=1$ là $c_{i,1}\leftrightarrow(c_{i-1,1}\lor x_i)$:
+
+$$
+(\neg c_{i-1,1}\lor c_{i,1})\land
+(\neg x_i\lor c_{i,1})\land
+(\neg c_{i,1}\lor c_{i-1,1}\lor x_i).
+$$
+
+Boundary $j=i>1$ là $c_{i,i}\leftrightarrow(c_{i-1,i-1}\land x_i)$:
+
+$$
+(\neg c_{i,i}\lor c_{i-1,i-1})\land
+(\neg c_{i,i}\lor x_i)\land
+(\neg c_{i-1,i-1}\lor\neg x_i\lor c_{i,i}).
+$$
+
+Query AtLeast $q$ chỉ assume $c_{n,q}$; $q=0$ không cần literal. Khi threshold
+đổi từ $q$ sang $q+1$, chỉ tạo column mới, không rebuild và không sửa clause cũ.
+Việc encode cả hai chiều là cần thiết để output dương phản ánh đúng saved count.
+Không dùng output dương của `ITotalizer` làm AtLeast.
+
+Khi $K\le n//2$, phía burned dùng `ITotalizer` với assumption `-rhs[K]`.
+Capacity của totalizer được tăng incremental nếu cần query bound lớn hơn đã tạo.
+Firefighter cardinality vẫn dùng implementation `AtMost` cũ. Hai phía objective
+có thể cùng tồn tại; mỗi query chỉ assume output của phía được chọn. Không có
+permanent objective bound. Auxiliary IDs của cả hai phía dùng cùng `VarManager`,
+tách biệt với bộ đếm semantic và containment activation.
+
 Encoder chỉ tạo layer tới horizon đang cần và nối thêm khi $T$ tăng.
 
 ## Preprocessing: lower bound và horizon tối đa
