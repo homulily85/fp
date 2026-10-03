@@ -74,3 +74,57 @@ horizons, the short horizon is a source of search difficulty. If all horizons
 remain difficult, the results do not support horizon tightness as the main
 cause. These experiments provide evidence only; they do not change solver
 settings or prove that the same behavior holds for other instances.
+
+## Phase guidance
+
+Check phase preferences on one fixed query without changing the production STK
+solver:
+
+```bash
+python -m ffp_sat.diagnose phase-guidance \
+  dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --T 9 --K 989 \
+  --schedule results/incumbent.json \
+  --modes none action full consensus \
+  --consensus-pool-size 32 --seed 0 \
+  --per-query-time 60 --solver cadical300
+```
+
+The command first checks that the selected PySAT backend exposes
+`set_phases()`. Each mode then runs in its own spawned process with a fresh
+CaDiCaL instance. `none` does not call `set_phases`; `action` prefers every
+action variable according to the incumbent; `full` also prefers burned and
+defended semantic state variables from the simulator trace; `consensus` votes
+for actions by round across the incumbent, Pareto schedules, and a seeded pool
+of randomized threat schedules. These preferences do not add clauses or
+assumptions. Every SAT schedule is independently checked by the simulator.
+
+The JSON and CSV output include phase literal counts and polarity counts,
+guidance construction time, solve time, assumptions, and the CNF size. They
+also include CaDiCaL decisions, conflicts, propagations, and restarts when the
+backend reports them. The command checks that all modes have identical CNF
+counts and assumptions. Consensus output records pool size and the winning
+vertex votes by round. Completed solves also report decisions per second,
+conflicts per decision, and propagations per decision when those statistics
+are available.
+
+To measure whether explicit phase preferences help after CaDiCaL has already
+processed the previous production bounds, add a replay:
+
+```bash
+python -m ffp_sat.diagnose phase-guidance \
+  dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --T 9 --K 989 \
+  --schedule results/incumbent.json \
+  --modes none action full consensus \
+  --replay-bounds 991 990 \
+  --per-query-time 120 --solver cadical300
+```
+
+Each mode still has a fresh solver. Within that solver, replay bounds are
+solved normally in the listed descending order; phase guidance is applied only
+before the final query. Statistics for that query are reported as deltas from
+immediately before its solve. The per-query wall-clock limit covers the whole
+replay case, including setup and earlier bounds. Replay output is written to
+`phase_guidance_replay.json` and `.csv`; direct output uses
+`phase_guidance.json` and `.csv`.

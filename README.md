@@ -63,6 +63,10 @@ python -m ffp_sat.diagnose fixed-prefix dataset/1000_ep0.0075_0_gilbert_1.in \
 
 python -m ffp_sat.diagnose heatmap dataset/1000_ep0.0075_0_gilbert_1.in \
   --firefighters 1 --K 989 --horizons 9 11 13 15 18 --per-query-time 30
+
+python -m ffp_sat.diagnose phase-guidance dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --T 9 --K 989 --schedule results/incumbent.json \
+  --modes none action full consensus --per-query-time 60
 ```
 
 Xem hướng dẫn [diagnostic](docs/DIAGNOSTICS.md) để biết cách đọc timeout,

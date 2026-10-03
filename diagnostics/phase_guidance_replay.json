@@ -1,0 +1,298 @@
+{
+  "instance": "dataset/1000_ep0.0075_0_gilbert_1.in",
+  "n": 1000,
+  "m": 3809,
+  "firefighters": 1,
+  "solver": "cadical300",
+  "per_query_time": 120.0,
+  "T": 9,
+  "K": 989,
+  "schedule_input": "/tmp/ffp-diagnostic-incumbent.json",
+  "incumbent_k": 990,
+  "modes": [
+    "none",
+    "action",
+    "full",
+    "consensus"
+  ],
+  "consensus_pool_size": 32,
+  "seed": 0,
+  "replay_bounds": [
+    991,
+    990
+  ],
+  "cases": [
+    {
+      "worker_pid": 4,
+      "experiment": "phase_guidance_replay",
+      "phase_mode": "none",
+      "T": 9,
+      "K": 989,
+      "result": "TIMEOUT",
+      "encoding_time": 0.19532603500556434,
+      "guidance_build_time": 0.0001572420005686581,
+      "solve_time": 70.66873946200212,
+      "replay_results": [
+        {
+          "K": 991,
+          "result": "SAT",
+          "solve_time": 28.71253277100186,
+          "decisions": 483968,
+          "conflicts": 127951,
+          "propagations": 259210386,
+          "restarts": 1633
+        },
+        {
+          "K": 990,
+          "result": "SAT",
+          "solve_time": 20.370548061997397,
+          "decisions": 285138,
+          "conflicts": 77017,
+          "propagations": 189453466,
+          "restarts": 1430
+        }
+      ],
+      "phase_literals": 0,
+      "phase_positive": 0,
+      "phase_negative": 0,
+      "variables": 57928,
+      "clauses": 222728,
+      "semantic_variables": 29000,
+      "auxiliary_variables": 28927,
+      "assumption_count": 2,
+      "consensus_pool": null,
+      "consensus_votes": [],
+      "containment_clauses": 7618,
+      "containment_activation_variables": 1,
+      "assumptions": [
+        46983,
+        57928
+      ],
+      "wall_time": 120.0035413900041
+    },
+    {
+      "worker_pid": 5,
+      "experiment": "phase_guidance_replay",
+      "phase_mode": "action",
+      "T": 9,
+      "K": 989,
+      "result": "TIMEOUT",
+      "encoding_time": 0.1766285249905195,
+      "guidance_build_time": 0.002827373995387461,
+      "solve_time": 71.10576005400071,
+      "replay_results": [
+        {
+          "K": 991,
+          "result": "SAT",
+          "solve_time": 29.43515070599824,
+          "decisions": 483968,
+          "conflicts": 127951,
+          "propagations": 259210386,
+          "restarts": 1633
+        },
+        {
+          "K": 990,
+          "result": "SAT",
+          "solve_time": 19.230330859994865,
+          "decisions": 285138,
+          "conflicts": 77017,
+          "propagations": 189453466,
+          "restarts": 1430
+        }
+      ],
+      "phase_literals": 9000,
+      "phase_positive": 6,
+      "phase_negative": 8994,
+      "variables": 57928,
+      "clauses": 222728,
+      "semantic_variables": 29000,
+      "auxiliary_variables": 28927,
+      "assumption_count": 2,
+      "consensus_pool": null,
+      "consensus_votes": [],
+      "containment_clauses": 7618,
+      "containment_activation_variables": 1,
+      "assumptions": [
+        46983,
+        57928
+      ],
+      "wall_time": 120.00424497300264
+    },
+    {
+      "worker_pid": 6,
+      "experiment": "phase_guidance_replay",
+      "phase_mode": "full",
+      "T": 9,
+      "K": 989,
+      "result": "TIMEOUT",
+      "encoding_time": 0.17508594999526395,
+      "guidance_build_time": 0.00848493699595565,
+      "solve_time": 74.24093280899979,
+      "replay_results": [
+        {
+          "K": 991,
+          "result": "SAT",
+          "solve_time": 26.97999540300225,
+          "decisions": 483968,
+          "conflicts": 127951,
+          "propagations": 259210386,
+          "restarts": 1633
+        },
+        {
+          "K": 990,
+          "result": "SAT",
+          "solve_time": 18.548099724997883,
+          "decisions": 285138,
+          "conflicts": 77017,
+          "propagations": 189453466,
+          "restarts": 1430
+        }
+      ],
+      "phase_literals": 27000,
+      "phase_positive": 6175,
+      "phase_negative": 20825,
+      "variables": 57928,
+      "clauses": 222728,
+      "semantic_variables": 29000,
+      "auxiliary_variables": 28927,
+      "assumption_count": 2,
+      "consensus_pool": null,
+      "consensus_votes": [],
+      "containment_clauses": 7618,
+      "containment_activation_variables": 1,
+      "assumptions": [
+        46983,
+        57928
+      ],
+      "wall_time": 120.00313776500116
+    },
+    {
+      "worker_pid": 7,
+      "experiment": "phase_guidance_replay",
+      "phase_mode": "consensus",
+      "T": 9,
+      "K": 989,
+      "result": "TIMEOUT",
+      "encoding_time": 0.17047114000160946,
+      "guidance_build_time": 0.12730628799909027,
+      "solve_time": 74.3312792039942,
+      "replay_results": [
+        {
+          "K": 991,
+          "result": "SAT",
+          "solve_time": 26.821224041996174,
+          "decisions": 483968,
+          "conflicts": 127951,
+          "propagations": 259210386,
+          "restarts": 1633
+        },
+        {
+          "K": 990,
+          "result": "SAT",
+          "solve_time": 18.506985956999415,
+          "decisions": 285138,
+          "conflicts": 77017,
+          "propagations": 189453466,
+          "restarts": 1430
+        }
+      ],
+      "phase_literals": 9000,
+      "phase_positive": 6,
+      "phase_negative": 8994,
+      "variables": 57928,
+      "clauses": 222728,
+      "semantic_variables": 29000,
+      "auxiliary_variables": 28927,
+      "assumption_count": 2,
+      "consensus_pool": {
+        "generated": 31,
+        "unique": 32,
+        "retained": 32,
+        "best_k": 990,
+        "worst_k": 994,
+        "median_k": 994
+      },
+      "consensus_votes": [
+        {
+          "round": 1,
+          "vertices": [
+            {
+              "vertex": 134,
+              "votes": 9,
+              "fraction": 0.28125
+            }
+          ]
+        },
+        {
+          "round": 2,
+          "vertices": [
+            {
+              "vertex": 538,
+              "votes": 4,
+              "fraction": 0.125
+            }
+          ]
+        },
+        {
+          "round": 3,
+          "vertices": [
+            {
+              "vertex": 393,
+              "votes": 2,
+              "fraction": 0.0625
+            }
+          ]
+        },
+        {
+          "round": 4,
+          "vertices": [
+            {
+              "vertex": 121,
+              "votes": 2,
+              "fraction": 0.0625
+            }
+          ]
+        },
+        {
+          "round": 5,
+          "vertices": [
+            {
+              "vertex": 174,
+              "votes": 2,
+              "fraction": 0.0625
+            }
+          ]
+        },
+        {
+          "round": 6,
+          "vertices": [
+            {
+              "vertex": 269,
+              "votes": 18,
+              "fraction": 0.5625
+            }
+          ]
+        },
+        {
+          "round": 7,
+          "vertices": []
+        },
+        {
+          "round": 8,
+          "vertices": []
+        },
+        {
+          "round": 9,
+          "vertices": []
+        }
+      ],
+      "containment_clauses": 7618,
+      "containment_activation_variables": 1,
+      "assumptions": [
+        46983,
+        57928
+      ],
+      "wall_time": 120.0037879800002
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from ffp_sat.diagnose import _write_outputs, run_case
+from ffp_sat.diagnose import _write_outputs, run_case, run_phase_case
 
 
 class DiagnoseTests(unittest.TestCase):
@@ -49,6 +49,30 @@ class DiagnoseTests(unittest.TestCase):
                 rows = list(csv.DictReader(stream))
             self.assertEqual(rows[0]["result"], "SAT")
             self.assertEqual(json.loads(rows[0]["schedule"]), [[1]])
+
+    def test_phase_replay_uses_prior_bounds_then_reports_final_query(self):
+        with tempfile.TemporaryDirectory() as root:
+            instance = Path(root) / "path.in"
+            instance.write_text("0\n3\n2\nx\n1\n0\n0 1\n1 2\n")
+            result = run_phase_case(
+                instance,
+                1,
+                "cadical300",
+                2,
+                1,
+                "action",
+                [[1]],
+                [[[1]]],
+                2,
+                0,
+                5,
+                replay_bounds=[2],
+            )
+            self.assertEqual(result["result"], "SAT")
+            self.assertEqual(result["replay_results"][0]["K"], 2)
+            self.assertEqual(result["replay_results"][0]["result"], "SAT")
+            self.assertEqual(result["phase_literals"], 6)
+            self.assertEqual(result["actual_k"], 1)
 
 
 if __name__ == "__main__":

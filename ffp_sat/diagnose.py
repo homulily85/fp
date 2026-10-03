@@ -12,6 +12,7 @@ from pathlib import Path
 from pysat.solvers import Solver
 
 from .encoder import Encoder
+from .guidance import PhaseMode, build_consensus_pool, build_phase_literals, validate_phase_literals
 from .instance import read_instance
 from .preprocess import preprocess
 from .simulator import simulate
@@ -141,6 +142,174 @@ def _query_worker(connection, path, firefighters, solver_name, horizon, bound, f
         connection.close()
 
 
+def _phase_worker(
+    connection,
+    path,
+    firefighters,
+    solver_name,
+    horizon,
+    bound,
+    mode,
+    incumbent_schedule,
+    supplied_schedules,
+    pool_size,
+    seed,
+    replay_bounds,
+    started,
+):
+    solver = encoder = None
+    metrics = {
+        "worker_pid": os.getpid(),
+        "experiment": "phase_guidance_replay" if replay_bounds else "phase_guidance",
+        "phase_mode": mode,
+        "T": horizon,
+        "K": bound,
+        "result": "ERROR",
+        "encoding_time": 0.0,
+        "guidance_build_time": 0.0,
+        "solve_time": 0.0,
+        "replay_results": [],
+        "phase_literals": 0,
+        "phase_positive": 0,
+        "phase_negative": 0,
+        "variables": 0,
+        "clauses": 0,
+        "semantic_variables": 0,
+        "auxiliary_variables": 0,
+        "assumption_count": 0,
+    }
+    try:
+        instance = read_instance(path)
+        distance, _ = preprocess(instance, firefighters)
+        solver = Solver(name=solver_name)
+        if not hasattr(solver, "set_phases"):
+            raise RuntimeError(f"Solver backend {solver_name!r} does not support set_phases()")
+
+        encoding_time = 0.0
+        encoder = Encoder(instance, firefighters, solver, distance)
+        encode_started = time.monotonic()
+        encoder.ensure_horizon(horizon)
+        encoding_time += time.monotonic() - encode_started
+        replay_results = []
+        for replay_bound in replay_bounds:
+            encode_started = time.monotonic()
+            replay_assumptions = encoder.assumptions(horizon, replay_bound, instance.n)
+            encoding_time += time.monotonic() - encode_started
+            before = solver.accum_stats() if hasattr(solver, "accum_stats") else {}
+            replay_started = time.monotonic()
+            replay_sat = solver.solve(assumptions=replay_assumptions)
+            replay_time = time.monotonic() - replay_started
+            after = solver.accum_stats() if hasattr(solver, "accum_stats") else {}
+            replay_results.append(
+                {
+                    "K": replay_bound,
+                    "result": "SAT" if replay_sat else "UNSAT",
+                    "solve_time": replay_time,
+                    "decisions": after.get("decisions", 0) - before.get("decisions", 0),
+                    "conflicts": after.get("conflicts", 0) - before.get("conflicts", 0),
+                    "propagations": after.get("propagations", 0) - before.get("propagations", 0),
+                    "restarts": after.get("restarts", 0) - before.get("restarts", 0),
+                }
+            )
+
+        encode_started = time.monotonic()
+        assumptions = encoder.assumptions(horizon, bound, instance.n)
+        encoding_time += time.monotonic() - encode_started
+
+        guidance_started = time.monotonic()
+        pool = []
+        pool_stats = None
+        if mode == PhaseMode.CONSENSUS.value:
+            pool, pool_stats = build_consensus_pool(
+                instance,
+                firefighters,
+                supplied_schedules,
+                pool_size,
+                seed,
+            )
+            schedules = [solution.schedule for solution in pool]
+        else:
+            schedules = None
+        phases, votes = build_phase_literals(
+            encoder,
+            instance,
+            firefighters,
+            horizon,
+            mode,
+            incumbent_schedule=incumbent_schedule,
+            consensus_schedules=schedules,
+        )
+        phase_counts = validate_phase_literals(phases)
+        if mode != PhaseMode.NONE.value:
+            solver.set_phases(phases)
+        metrics["guidance_build_time"] = time.monotonic() - guidance_started
+        metrics.update(
+            **phase_counts,
+            consensus_pool=pool_stats,
+            consensus_votes=votes,
+            replay_results=replay_results,
+            encoding_time=encoding_time,
+            variables=encoder.vars.top,
+            clauses=encoder.clauses,
+            semantic_variables=encoder.vars.semantic,
+            auxiliary_variables=encoder.vars.auxiliary,
+            containment_clauses=encoder.debug_profile()["containment"]["number_of_clauses"]
+            if encoder.debug
+            else 2 * instance.m,
+            containment_activation_variables=len(encoder.h),
+            assumption_count=len(assumptions),
+            assumptions=assumptions,
+        )
+        connection.send(("ENCODED", metrics))
+        connection.send(("SOLVE_STARTED", time.monotonic() - started))
+        before = solver.accum_stats() if hasattr(solver, "accum_stats") else {}
+        solve_started = time.monotonic()
+        satisfiable = solver.solve(assumptions=assumptions)
+        metrics["solve_time"] = time.monotonic() - solve_started
+        after = solver.accum_stats() if hasattr(solver, "accum_stats") else {}
+        for key in ("decisions", "conflicts", "propagations", "restarts"):
+            if key in after:
+                metrics[key] = after[key] - before.get(key, 0)
+        metrics["decisions_per_second"] = (
+            metrics["decisions"] / metrics["solve_time"]
+            if metrics.get("decisions") is not None and metrics["solve_time"] > 0
+            else None
+        )
+        metrics["conflicts_per_decision"] = (
+            metrics["conflicts"] / metrics["decisions"]
+            if metrics.get("conflicts") is not None and metrics.get("decisions", 0) > 0
+            else None
+        )
+        metrics["propagations_per_decision"] = (
+            metrics["propagations"] / metrics["decisions"]
+            if metrics.get("propagations") is not None and metrics.get("decisions", 0) > 0
+            else None
+        )
+
+        if satisfiable:
+            model = set(solver.get_model())
+            schedule = [list(actions) for actions in encoder.decode(model, horizon)]
+            solution = simulate(instance, firefighters, schedule)
+            if solution.k > bound or solution.containment_time > horizon:
+                raise AssertionError("SAT model failed independent schedule validation")
+            metrics.update(
+                actual_k=solution.k,
+                containment_time=solution.containment_time,
+                schedule=[list(actions) for actions in solution.schedule],
+            )
+        metrics["result"] = "SAT" if satisfiable else "UNSAT"
+        connection.send(("RESULT", metrics))
+    except Exception as exc:
+        metrics.update(result="ERROR", error=f"{type(exc).__name__}: {exc}")
+        connection.send(("RESULT", metrics))
+    finally:
+        if encoder is not None:
+            encoder.close()
+        if solver is not None:
+            solver.delete()
+        connection.close()
+
+
 def run_case(path, firefighters, solver_name, horizon, bound, fixed_rounds, timeout):
     """Run one query with a fresh process and SAT solver."""
     context = multiprocessing.get_context("spawn")
@@ -223,6 +392,155 @@ def run_case(path, firefighters, solver_name, horizon, bound, fixed_rounds, time
         process.close()
 
 
+def run_phase_case(
+    path,
+    firefighters,
+    solver_name,
+    horizon,
+    bound,
+    mode,
+    incumbent_schedule,
+    supplied_schedules,
+    pool_size,
+    seed,
+    timeout,
+    replay_bounds=(),
+):
+    """Run one phase-guidance query, optionally replaying earlier bounds first."""
+    context = multiprocessing.get_context("spawn")
+    receiver, sender = context.Pipe(duplex=False)
+    started = time.monotonic()
+    process = context.Process(
+        target=_phase_worker,
+        args=(
+            sender,
+            str(path),
+            firefighters,
+            solver_name,
+            horizon,
+            bound,
+            mode,
+            incumbent_schedule,
+            supplied_schedules,
+            pool_size,
+            seed,
+            tuple(replay_bounds),
+            started,
+        ),
+    )
+    latest = {}
+    solve_started = None
+    final_received = False
+    process.start()
+    sender.close()
+    try:
+        while process.is_alive() and time.monotonic() - started < timeout:
+            remaining = timeout - (time.monotonic() - started)
+            if not receiver.poll(min(0.05, max(0.0, remaining))):
+                continue
+            try:
+                kind, payload = receiver.recv()
+            except (EOFError, OSError):
+                break
+            if kind == "ENCODED":
+                latest = payload
+            elif kind == "RESULT":
+                latest = payload
+                final_received = True
+            elif kind == "SOLVE_STARTED":
+                solve_started = started + payload
+        timed_out = process.is_alive()
+        if timed_out:
+            process.terminate()
+            process.join(0.2)
+            if process.is_alive():
+                process.kill()
+                process.join(0.2)
+        else:
+            process.join(0.2)
+        while receiver.poll():
+            try:
+                kind, payload = receiver.recv()
+            except (EOFError, OSError):
+                break
+            if kind == "ENCODED":
+                latest = payload
+            elif kind == "RESULT":
+                latest = payload
+                final_received = True
+            elif kind == "SOLVE_STARTED":
+                solve_started = started + payload
+        if timed_out and not final_received:
+            latest["result"] = "TIMEOUT"
+            latest["solve_time"] = min(timeout, max(0.0, time.monotonic() - solve_started)) if solve_started else 0.0
+        elif not final_received:
+            latest.update(result="ERROR", error=f"Worker exited with code {process.exitcode}")
+        latest["wall_time"] = time.monotonic() - started
+        latest.setdefault("phase_mode", mode)
+        latest.setdefault("experiment", "phase_guidance_replay" if replay_bounds else "phase_guidance")
+        latest.setdefault("T", horizon)
+        latest.setdefault("K", bound)
+        latest.setdefault("replay_results", [])
+        return latest
+    finally:
+        if process.is_alive():
+            process.kill()
+            process.join(0.2)
+        receiver.close()
+        process.close()
+
+
+def phase_guidance_experiment(
+    path,
+    firefighters,
+    solver,
+    horizon,
+    bound,
+    modes,
+    incumbent_schedule,
+    supplied_schedules,
+    pool_size,
+    seed,
+    timeout,
+    replay_bounds=(),
+):
+    cases = []
+    for mode in modes:
+        case = run_phase_case(
+            path,
+            firefighters,
+            solver,
+            horizon,
+            bound,
+            mode,
+            incumbent_schedule,
+            supplied_schedules,
+            pool_size,
+            seed,
+            timeout,
+            replay_bounds,
+        )
+        cases.append(case)
+        print(
+            f"phase mode={mode}: {case['result']} {case.get('solve_time', 0.0):.2f}s "
+            f"phases={case.get('phase_literals', 0)}",
+            flush=True,
+        )
+    signatures = {
+        (
+            case.get("variables"),
+            case.get("clauses"),
+            case.get("assumption_count"),
+            tuple(case.get("assumptions", ())),
+        )
+        for case in cases
+        if case.get("variables") is not None
+    }
+    if len(signatures) > 1:
+        raise AssertionError(f"Phase modes changed CNF or assumptions: {signatures}")
+    return cases
+
+
 def fixed_prefix_experiment(path, firefighters, solver, horizon, bound, schedule, max_prefix, timeout):
     cases = []
     for prefix_length in range(max_prefix + 1):
@@ -278,6 +596,18 @@ def _write_outputs(out_dir, stem, cases, metadata):
         "containment_time",
         "schedule",
         "fixed_actions",
+        "phase_mode",
+        "phase_literals",
+        "phase_positive",
+        "phase_negative",
+        "guidance_build_time",
+        "replay_results",
+        "consensus_pool",
+        "consensus_votes",
+        "assumptions",
+        "decisions_per_second",
+        "conflicts_per_decision",
+        "propagations_per_decision",
         "wall_time",
         "error",
     )
@@ -291,6 +621,10 @@ def _write_outputs(out_dir, stem, cases, metadata):
                     **case,
                     "schedule": json.dumps(case.get("schedule")),
                     "fixed_actions": json.dumps(case.get("fixed_actions")),
+                    "replay_results": json.dumps(case.get("replay_results")),
+                    "consensus_pool": json.dumps(case.get("consensus_pool")),
+                    "consensus_votes": json.dumps(case.get("consensus_votes")),
+                    "assumptions": json.dumps(case.get("assumptions")),
                 }
             )
     return json_path, csv_path
@@ -313,8 +647,35 @@ def main(argv=None):
     heatmap.add_argument("--firefighters", type=positive_int, required=True)
     heatmap.add_argument("--K", type=nonnegative_int, required=True)
     heatmap.add_argument("--horizons", type=nonnegative_int, nargs="+", required=True)
+    phase = subparsers.add_parser(
+        "phase-guidance", help="Compare CaDiCaL phase preferences on one F(T,K) query"
+    )
+    phase.add_argument("instance", type=Path)
+    phase.add_argument("--firefighters", type=positive_int, required=True)
+    phase.add_argument("--T", type=nonnegative_int, required=True)
+    phase.add_argument("--K", type=nonnegative_int, required=True)
+    phase.add_argument("--schedule", type=Path, required=True, help="JSON result containing an incumbent schedule")
+    phase.add_argument(
+        "--modes",
+        choices=[mode.value for mode in PhaseMode],
+        nargs="+",
+        default=[mode.value for mode in PhaseMode],
+    )
+    phase.add_argument("--consensus-pool-size", type=positive_int, default=32)
+    phase.add_argument("--seed", type=int, default=0)
+    phase.add_argument(
+        "--replay-bounds",
+        type=nonnegative_int,
+        nargs="*",
+        default=[],
+        help="Optional preceding K bounds solved normally on the same solver before applying guidance",
+    )
     for command in (fixed, heatmap):
         command.add_argument("--per-query-time", type=positive_float, default=30.0)
+        command.add_argument("--solver", default="cadical300")
+        command.add_argument("--out-dir", type=Path)
+    for command in (phase,):
+        command.add_argument("--per-query-time", type=positive_float, default=60.0)
         command.add_argument("--solver", default="cadical300")
         command.add_argument("--out-dir", type=Path)
     args = parser.parse_args(argv)
@@ -333,7 +694,65 @@ def main(argv=None):
     }
     if args.K > instance.n:
         parser.error("--K must not exceed the number of vertices")
-    if args.experiment == "fixed-prefix":
+    if args.experiment == "phase-guidance":
+        if "action" in args.modes or "full" in args.modes:
+            try:
+                schedule, schedule_meta = load_result_schedule(args.schedule)
+                incumbent = simulate(instance, args.firefighters, schedule)
+            except (OSError, ValueError, TypeError) as exc:
+                parser.error(f"Cannot validate incumbent schedule: {exc}")
+            if "best_k" in schedule_meta and incumbent.k != schedule_meta["best_k"]:
+                parser.error(
+                    f"Input schedule validates to K={incumbent.k}, expected K={schedule_meta['best_k']}"
+                )
+            incumbent_schedule = incumbent.schedule
+        else:
+            try:
+                raw_schedule, schedule_meta = load_result_schedule(args.schedule)
+                incumbent_schedule = simulate(instance, args.firefighters, raw_schedule).schedule
+            except (OSError, ValueError, TypeError) as exc:
+                parser.error(f"Cannot validate incumbent schedule: {exc}")
+        supplied_schedules = [incumbent_schedule]
+        for row in schedule_meta.get("pareto_frontier", []):
+            if isinstance(row, dict) and isinstance(row.get("schedule"), list):
+                supplied_schedules.append(row["schedule"])
+        try:
+            probe = Solver(name=args.solver)
+            if not hasattr(probe, "set_phases"):
+                parser.error(f"SAT backend {args.solver!r} does not support set_phases(); phase experiment stopped")
+            probe.delete()
+        except Exception as exc:
+            parser.error(f"Cannot initialize SAT backend {args.solver!r}: {exc}")
+        if any(k <= args.K or k > instance.n for k in args.replay_bounds):
+            parser.error("Every --replay-bounds value must be greater than --K and at most n")
+        if any(left <= right for left, right in zip(args.replay_bounds, args.replay_bounds[1:])):
+            parser.error("--replay-bounds must be strictly descending")
+        metadata.update(
+            T=args.T,
+            K=args.K,
+            schedule_input=str(args.schedule),
+            incumbent_k=simulate(instance, args.firefighters, incumbent_schedule).k,
+            modes=args.modes,
+            consensus_pool_size=args.consensus_pool_size,
+            seed=args.seed,
+            replay_bounds=args.replay_bounds,
+        )
+        cases = phase_guidance_experiment(
+            args.instance,
+            args.firefighters,
+            args.solver,
+            args.T,
+            args.K,
+            args.modes,
+            incumbent_schedule,
+            supplied_schedules,
+            args.consensus_pool_size,
+            args.seed,
+            args.per_query_time,
+            args.replay_bounds,
+        )
+        stem = "phase_guidance_replay" if args.replay_bounds else "phase_guidance"
+    elif args.experiment == "fixed-prefix":
         try:
             schedule, schedule_meta = load_result_schedule(args.schedule)
             verified = simulate(instance, args.firefighters, schedule)
