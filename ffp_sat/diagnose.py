@@ -17,6 +17,7 @@ from .encoder import Encoder
 from .guidance import PhaseMode, build_consensus_pool, build_phase_literals, validate_phase_literals
 from .instance import read_instance
 from .prefix_core_mining import run_prefix_core_mining
+from .prefix_trie_mining import run_prefix_trie_mining
 from .preprocess import preprocess
 from .simulator import simulate
 
@@ -1645,6 +1646,28 @@ def main(argv=None):
         command.add_argument("--out-dir", type=Path)
     core_mining.add_argument("--solver", default="cadical300")
     core_mining.add_argument("--out-dir", type=Path)
+    trie_mining = subparsers.add_parser(
+        "prefix-trie-mining",
+        help="Probe semantic action-prefix tries and compare guarded short-prefix clauses",
+    )
+    trie_mining.add_argument("instance", type=Path)
+    trie_mining.add_argument("--firefighters", type=positive_int, required=True)
+    trie_mining.add_argument("--T", type=nonnegative_int, required=True)
+    trie_mining.add_argument("--K", type=nonnegative_int, required=True)
+    trie_mining.add_argument("--schedule", type=Path, required=True)
+    trie_mining.add_argument("--pool-size", type=positive_int, default=128)
+    trie_mining.add_argument("--prefix-depth", type=positive_int, default=5)
+    trie_mining.add_argument(
+        "--depth-budgets", type=positive_float, nargs="+", default=[60.0, 20.0, 10.0, 2.0, 1.0]
+    )
+    trie_mining.add_argument("--seed", type=int, default=0)
+    trie_mining.add_argument("--jobs", type=positive_int, default=1)
+    trie_mining.add_argument("--replay-bounds", type=nonnegative_int, nargs="+")
+    trie_mining.add_argument("--replay-query-time", type=positive_float, default=90.0)
+    trie_mining.add_argument("--final-query-time", type=positive_float, default=600.0)
+    trie_mining.add_argument("--promote-time", type=positive_float, default=0.0)
+    trie_mining.add_argument("--solver", default="cadical300")
+    trie_mining.add_argument("--out-dir", type=Path)
     args = parser.parse_args(argv)
 
     try:
@@ -1736,6 +1759,90 @@ def main(argv=None):
                     writer.writerow({"record_type": "master", "mode": mode, **stage, "stats": json.dumps(stage.get("stats"))})
         print(f"Result: {report['result']}\nJSON: {json_path}\nCSV: {csv_path}", flush=True)
         return int(report["result"] in {"ERROR", "SANITY_FAILED", "HISTORY_MISMATCH"})
+    if args.experiment == "prefix-trie-mining":
+        if args.firefighters != 1:
+            parser.error("prefix-trie-mining currently requires --firefighters 1")
+        if args.jobs != 1:
+            parser.error("prefix-trie-mining currently requires --jobs 1")
+        if len(args.depth_budgets) != args.prefix_depth:
+            parser.error("--depth-budgets must provide exactly one budget per prefix depth")
+        if any(bound <= args.K or bound > instance.n for bound in (args.replay_bounds or [])):
+            parser.error("Every replay bound must be greater than --K and at most n")
+        if args.replay_bounds is not None and any(
+            left <= right for left, right in zip(args.replay_bounds, args.replay_bounds[1:])
+        ):
+            parser.error("--replay-bounds must be strictly descending")
+        try:
+            probe = Solver(name=args.solver, bootstrap_with=[[-1, -2]])
+            if not hasattr(probe, "propagate"):
+                parser.error(f"SAT backend {args.solver!r} does not support propagate(); trie mining stopped")
+            propagated = probe.propagate(assumptions=[1, 2])
+            if (
+                not isinstance(propagated, tuple)
+                or len(propagated) != 2
+                or propagated[0] is not False
+            ):
+                parser.error(
+                    f"SAT backend {args.solver!r} failed the assumption-propagation contradiction check; "
+                    "trie mining stopped"
+                )
+            probe.delete()
+        except Exception as exc:
+            parser.error(f"Cannot verify propagation support for {args.solver!r}: {exc}")
+        try:
+            report = run_prefix_trie_mining(
+                args.instance,
+                args.firefighters,
+                args.solver,
+                args.T,
+                args.K,
+                args.schedule,
+                args.pool_size,
+                args.prefix_depth,
+                tuple(args.depth_budgets),
+                args.seed,
+                args.replay_bounds or (991, 990),
+                args.replay_query_time,
+                args.final_query_time,
+                args.jobs,
+                args.promote_time,
+            )
+            report["propagation_support"] = {
+                "solver": args.solver,
+                "supported": True,
+                "contradiction_result": list(propagated[1]),
+            }
+        except (OSError, ValueError, TypeError, RuntimeError) as exc:
+            parser.error(f"Prefix-trie diagnostic failed: {exc}")
+        out_dir = args.out_dir or Path("diagnostics")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        json_path = out_dir / "prefix_trie_mining.json"
+        json_path.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+        csv_path = out_dir / "prefix_trie_mining.csv"
+        fields = (
+            "record_type", "index", "mode", "stage", "depth", "prefix", "parent_status",
+            "source_count", "best_source_k", "result", "solve_time", "propagation_time",
+            "query_wall_time", "actual_k", "containment_time", "pruned_schedules",
+            "variables_before_solve", "clauses_before_solve", "decisions", "conflicts",
+            "propagations", "restarts", "stats",
+        )
+        with csv_path.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
+            writer.writeheader()
+            for index, row in enumerate(report.get("sanity_probes", [])):
+                writer.writerow({"record_type": "sanity", "index": index, **row,
+                                 "prefix": json.dumps(row.get("prefix")),
+                                 "stats": json.dumps(row.get("stats"))})
+            for index, row in enumerate(report.get("trie", {}).get("probes", [])):
+                writer.writerow({"record_type": "trie_probe", "index": index, **row,
+                                 "prefix": json.dumps(row.get("prefix")),
+                                 "stats": json.dumps(row.get("stats"))})
+            for mode, master in report.get("master_comparison", {}).items():
+                for row in master.get("stages", []):
+                    writer.writerow({"record_type": "master_stage", "mode": mode, **row,
+                                     "prefix": "", "stats": json.dumps(row.get("stats"))})
+        print(f"Result: {report['result']}\nJSON: {json_path}\nCSV: {csv_path}", flush=True)
+        return int(report["result"] in {"ERROR", "PROBE_ERROR", "SANITY_FAILED", "HISTORY_MISMATCH"})
     if args.experiment == "action-canonical":
         if len(set(args.modes)) != len(args.modes):
             parser.error("--modes must not contain duplicates")

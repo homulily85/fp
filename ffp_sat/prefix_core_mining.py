@@ -408,7 +408,7 @@ def _master_replay_worker(
             connection.send(("FINAL", metrics))
             return
 
-        if mode == "mined":
+        if mode in {"mined", "trie-mined"}:
             for core in cores:
                 clause = guarded_core_clause(assumptions, core, encoder)
                 solver.add_clause(clause)

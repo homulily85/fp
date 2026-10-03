@@ -259,3 +259,38 @@ checks that the replay history and pre-append final query match BASE exactly;
 it stops before the final solve if they differ. A collection of UNSAT prefix
 cores only excludes those prefixes and does not prove the rest of the search
 space UNSAT.
+
+### Prefix trie mining
+
+`prefix-trie-mining` builds a trie from deterministic heuristic schedules and
+probes prefixes from short to long. An UNSAT prefix prunes its descendants; a
+timeout is UNKNOWN, so its descendants are still probed. Before mining, it
+rechecks the known incumbent prefixes at depths 3 and 5. The backend must
+support `propagate()`; the command checks this interface before starting. A
+propagation contradiction is an exact UNSAT result for that prefix.
+
+```bash
+python -m ffp_sat.diagnose prefix-trie-mining \
+  dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --T 9 --K 989 \
+  --schedule /tmp/ffp-diagnostic-incumbent.json \
+  --pool-size 128 --prefix-depth 5 \
+  --depth-budgets 60 20 10 2 1 --seed 0 --jobs 1 \
+  --replay-bounds 991 990 --replay-query-time 90 \
+  --final-query-time 600 --solver cadical300
+```
+
+Each prefix probe uses a fresh worker and CaDiCaL instance. Probe budgets are
+selected by depth. UNSAT prefixes become guarded clauses expressed with
+semantic `(round, vertex, polarity)` actions, never worker variable IDs. The
+master comparison runs BASE and trie-mined replays on separate solvers, checks
+that their history through the final query is identical, and appends learned
+clauses only after the final query has been built. SAT schedules are checked
+with the simulator. The final JSON/CSV are
+`diagnostics/prefix_trie_mining.*`.
+
+The report distinguishes `UNSAT_PROPAGATION`, `UNSAT_SOLVE`, `TIMEOUT`, and
+`ERROR`. Its depth histogram counts the shortest proved UNSAT trie nodes; it
+does not call a prefix minimal unless every shorter ancestor was also proved
+UNSAT. Mined prefixes are acceleration data, not a proof that the unprobed
+search space is UNSAT.
