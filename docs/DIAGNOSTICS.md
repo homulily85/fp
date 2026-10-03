@@ -161,3 +161,30 @@ time, and SAT statistics when the solve completes. SAT schedules are checked
 with the simulator. With one firefighter, the existing at-most-one constraint
 and the active nonempty rule already imply exactly one action in each active
 round, so no additional full-capacity counter is built.
+
+## Action timeline ablation
+
+Test a lighter canonicalization that adds only action-presence indicators:
+
+```bash
+python -m ffp_sat.diagnose action-canonical \
+  dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --T 9 --K 989 \
+  --modes base indicator-only prefix canonical \
+  --per-query-time 60 --solver cadical300
+```
+
+For each round, `y[t]` is equivalent to at least one action in that round.
+`indicator-only` adds only these equivalences. `prefix` adds `y[t+1] -> y[t]`,
+which rules out idle gaps before a later action. `canonical` also requires a
+previous round to use all $D$ firefighters if the following round has an
+action. It uses the incremental AtLeast counter for $D>1$ and skips that
+counter for $D=1$, where prefix plus the existing AtMost-one constraint already
+has the full-capacity effect. The canonical schedule restriction follows by
+moving later defenses into earlier free slots; this can only reduce fire
+spread and cannot make a previously defended vertex unavailable earlier.
+
+The output separates the base formula from indicator, prefix, and
+full-capacity overhead. With $T=9$, `indicator-only` should add 9 variables and
+9,009 clauses; `prefix` adds eight more clauses. For $D=1$, `canonical` has the
+same counts as `prefix`.

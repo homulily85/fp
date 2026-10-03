@@ -71,6 +71,10 @@ python -m ffp_sat.diagnose phase-guidance dataset/1000_ep0.0075_0_gilbert_1.in \
 python -m ffp_sat.diagnose canonical-actions dataset/1000_ep0.0075_0_gilbert_1.in \
   --firefighters 1 --T 9 --K 989 \
   --modes base active-only stop-after-contained canonical --per-query-time 30
+
+python -m ffp_sat.diagnose action-canonical dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --T 9 --K 989 \
+  --modes base indicator-only prefix canonical --per-query-time 60
 ```
 
 Xem hướng dẫn [diagnostic](docs/DIAGNOSTICS.md) để biết cách đọc timeout,
