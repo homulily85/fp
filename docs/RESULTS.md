@@ -102,6 +102,53 @@ Trường không áp dụng hoặc không có do worker dừng sớm có thể v
 CSV để trống các trường thiếu. Khi bật export, hai cột `cnf_export_raw` và
 `cnf_export_named` trỏ trực tiếp tới hai file tương ứng.
 
+## CNF và search profile (`--debug`)
+
+Thêm `--debug` vào lệnh chạy đơn hoặc batch để đưa object `debug` vào mỗi JSON
+kết quả. Các trường profile không được thêm vào CSV. Ví dụ:
+
+```bash
+python -m ffp_sat dataset/case.in --firefighters 2 --debug --json-out result.json
+python -m ffp_sat.batch dataset --firefighters 2 --debug
+```
+
+`debug.graph.vertex_degree` thống kê min, median, mean, p90, p95, p99 và max của
+bậc đỉnh. Các percentile dùng quy ước nearest-rank.
+
+`debug.encoding` là profile lũy kế của CNF đã thêm vào solver tại query gần nhất.
+`variables` có số biến semantic, activation, auxiliary và tổng số biến;
+`auxiliary_ratio` là auxiliary/tổng. `clauses` có một mục cho mỗi loại ràng buộc:
+`initial`, `burn_monotonic`, `defense_monotonic`, `exclusivity`,
+`action_definition`, `fire_spread`, `no_spontaneous_burning`,
+`firefighter_totalizer`, `containment`, `objective_totalizer`, `preprocessing`.
+Mỗi mục có số clause, tổng literal, độ dài clause nhỏ nhất/lớn nhất/trung bình
+và số auxiliary variable được tạo bởi totalizer của nhóm đó. Nhóm rỗng có count 0,
+độ dài min/max là null và trung bình 0.
+
+`clause_length_histogram` gom tất cả clause vào các bucket độ dài 1, 2, 3, 4–8,
+9–16 và trên 16. `no_spontaneous_length_histogram` dùng cùng bucket riêng cho
+clause cấm cháy tự phát; `no_spontaneous_exact_length_histogram` giữ độ dài chính
+xác làm key dạng chuỗi. `totalizer_clause_ratio` là tổng số clause của hai nhóm
+totalizer chia cho toàn bộ clause.
+
+`debug.queries` ghi profile propagation cho từng query $F(T,K)$: horizon, bound,
+số assumptions, số biến được unit propagation xác định, tổng số biến, tỷ lệ,
+thời gian propagation và trạng thái solve. Các biến được đếm theo ID khác nhau;
+các assumption được tính nếu xuất hiện trong kết quả propagation. Nếu backend SAT
+không hỗ trợ API `propagate`, query vẫn được giải bình thường và mục đó có
+`supported=false` cùng `reason`. `solve_status=RUNNING` nghĩa là checkpoint được
+ghi khi SAT call bắt đầu; nếu process bị timeout giữa solve, trạng thái cuối có thể
+vẫn là `RUNNING`. `NOT_RUN_TIME_LIMIT` nghĩa là propagation đã vượt deadline nên
+SAT solve chưa được gọi.
+
+Propagation là phép đo bổ sung và thời gian của nó nằm trong giới hạn wall-clock.
+Để không ảnh hưởng trạng thái của solver incremental chính, mỗi phép đo dùng một
+solver chẩn đoán tạm nạp CNF hiện tại; `debug_probe_setup_time` đo thời gian tạo
+solver này, còn `propagation_time` chỉ cộng thời gian gọi `propagate`. Cả hai đều
+nằm trong deadline và được báo riêng trong JSON. Vì cần giữ CNF để dựng solver chẩn
+đoán, `--debug` có thể tăng đáng kể mức dùng RAM và thời gian chạy. Khi không bật
+`--debug`, solver không giữ bản sao clause và không chạy phép propagation này.
+
 Export CNF chứa các clause đã sinh đến query đầu tiên, gồm các layer incremental,
 totalizer, containment activation và assumptions query được thêm thành unit clauses.
 Do đó file standalone tương đương query đầu tiên $F(T,K)$; nó không đại diện cho các

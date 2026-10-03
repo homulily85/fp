@@ -9,6 +9,7 @@ from .heuristic import portfolio, threat
 from .horizon import compute_horizon_bounds, initial_horizon
 from .instance import read_instance
 from .preprocess import preprocess
+from .profiling import degree_profile
 from .result import make_result
 from .simulator import simulate
 from .stk_solver import search
@@ -21,6 +22,8 @@ def worker(connection, path, firefighters, config, started, deadline):
         heuristic_time=0.0,
         encoding_time=0.0,
         sat_time=0.0,
+        propagation_time=0.0,
+        debug_probe_setup_time=0.0,
         sat_calls=0,
         sat_results=0,
         unsat_results=0,
@@ -42,6 +45,16 @@ def worker(connection, path, firefighters, config, started, deadline):
         start = time.monotonic()
         instance = read_instance(path)
         stats["read_time"] = time.monotonic() - start
+        if config.get("debug"):
+            stats["debug_profile"] = {
+                "graph": {
+                    "n": instance.n,
+                    "m": instance.m,
+                    "vertex_degree": degree_profile(instance.adjacency),
+                },
+                "encoding": None,
+                "queries": [],
+            }
         # Send a cheap verified incumbent before portfolio or SAT construction.
         start = time.monotonic()
         heuristic_deadline = min(deadline, start + config["heuristic_budget"])
@@ -108,6 +121,7 @@ def worker(connection, path, firefighters, config, started, deadline):
                 initial_horizon_factor=config.get("initial_horizon_factor", 1.5),
                 horizon_growth_factor=config.get("horizon_growth_factor", 2.0),
                 cnf_export_prefix=config.get("cnf_export_prefix"),
+                debug=config.get("debug", False),
             )
         result = make_result(instance, firefighters, best, lower, stats, config)
         connection.send(("FINAL", result))

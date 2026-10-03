@@ -22,6 +22,7 @@ def search(
     initial_horizon_factor=1.5,
     horizon_growth_factor=2.0,
     cnf_export_prefix=None,
+    debug=False,
 ):
     upper = best.k
     bounds = compute_horizon_bounds(instance.n, len(instance.initial_fire), firefighters, lower, upper)
@@ -32,7 +33,10 @@ def search(
     with Solver(name=backend) if solver_instance is None else nullcontext(solver_instance) as solver:
         start = time.monotonic()
         encoder = Encoder(
-            instance, firefighters, solver, distance, capture_cnf=cnf_export_prefix is not None
+            instance, firefighters, solver, distance,
+            capture_cnf=cnf_export_prefix is not None,
+            debug=debug,
+            capture_clauses=debug,
         )
         stats["encoding_time"] += time.monotonic() - start
         exported_cnf = False
@@ -43,6 +47,8 @@ def search(
                 bound = upper - 1
                 assumptions = encoder.assumptions(horizon, bound, upper)
                 stats["encoding_time"] += time.monotonic() - start
+                if debug:
+                    stats.setdefault("debug_profile", {})["encoding"] = encoder.debug_profile()
                 exported_now = False
                 if cnf_export_prefix is not None and not exported_cnf:
                     export_started = time.monotonic()
@@ -63,7 +69,70 @@ def search(
                         )
                         publish(best, lower, stats)
                     break
+                propagation = None
+                if debug:
+                    probe = None
+                    profile_started = time.monotonic()
+                    try:
+                        # Probe on an isolated solver. Some native backends can crash
+                        # when propagate() is mixed repeatedly with solve() on one instance.
+                        probe = Solver(name=backend, bootstrap_with=encoder.cnf)
+                        probe_setup_time = time.monotonic() - profile_started
+                        propagation_started = time.monotonic()
+                        consistent, propagated = probe.propagate(assumptions=assumptions)
+                        variables = {abs(literal) for literal in propagated}
+                        propagation = {
+                            "supported": True,
+                            "consistent": bool(consistent),
+                            "propagated_variables": len(variables),
+                            "variables_total": encoder.vars.top,
+                            "propagation_ratio": len(variables) / encoder.vars.top if encoder.vars.top else 0.0,
+                            "probe_setup_time_seconds": probe_setup_time,
+                            "time_seconds": time.monotonic() - propagation_started,
+                        }
+                    except (NotImplementedError, AttributeError) as exc:
+                        propagation = {
+                            "supported": False,
+                            "reason": f"{type(exc).__name__}: {exc}",
+                            "propagated_variables": None,
+                            "variables_total": encoder.vars.top,
+                            "propagation_ratio": None,
+                            "probe_setup_time_seconds": time.monotonic() - profile_started,
+                            "time_seconds": 0.0,
+                        }
+                    except Exception as exc:
+                        # Profiling is diagnostic and must not prevent the actual SAT query.
+                        propagation = {
+                            "supported": False,
+                            "reason": f"{type(exc).__name__}: {exc}",
+                            "propagated_variables": None,
+                            "variables_total": encoder.vars.top,
+                            "propagation_ratio": None,
+                            "probe_setup_time_seconds": time.monotonic() - profile_started,
+                            "time_seconds": 0.0,
+                        }
+                    finally:
+                        if probe is not None:
+                            probe.delete()
+                    stats["propagation_time"] = stats.get("propagation_time", 0.0) + propagation["time_seconds"]
+                    stats["debug_probe_setup_time"] = stats.get("debug_probe_setup_time", 0.0) + propagation[
+                        "probe_setup_time_seconds"
+                    ]
+                    propagation.update(horizon=horizon, k_bound=bound, assumption_count=len(assumptions))
+                    stats.setdefault("debug_profile", {}).setdefault("queries", []).append(propagation)
+                    if time.monotonic() >= deadline:
+                        propagation["solve_status"] = "NOT_RUN_TIME_LIMIT"
+                        stats.update(
+                            current_k_bound=bound,
+                            query_horizon=horizon,
+                            query_t_cert=bounds.certification,
+                            update_source="DEBUG_PROPAGATION",
+                        )
+                        publish(best, lower, stats)
+                        break
                 stats["sat_calls"] += 1
+                if debug:
+                    propagation["solve_status"] = "RUNNING"
                 stats["current_k_bound"] = bound
                 stats["query_horizon"] = horizon
                 stats["query_t_cert"] = bounds.certification
@@ -72,6 +141,9 @@ def search(
                 start = time.monotonic()
                 sat = solver.solve(assumptions=assumptions)
                 stats["sat_time"] += time.monotonic() - start
+                if debug:
+                    propagation["solve_status"] = "SAT" if sat else "UNSAT"
+                    stats["debug_profile"]["encoding"] = encoder.debug_profile()
                 if sat:
                     stats["sat_results"] += 1
                     source = "SAT"

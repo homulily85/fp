@@ -7,7 +7,8 @@ from pathlib import Path
 def make_result(instance, firefighters, best, lower, stats, config):
     upper = best.k
     cnf_export = stats.get("cnf_export")
-    return dict(
+    debug_profile = stats.get("debug_profile")
+    result = dict(
         instance=instance.name,
         n=instance.n,
         m=instance.m,
@@ -35,8 +36,11 @@ def make_result(instance, firefighters, best, lower, stats, config):
             initial_fire=sorted(instance.initial_fire),
         ),
         config=config,
-        **stats,
+        **{key: value for key, value in stats.items() if key != "debug_profile"},
     )
+    if config.get("debug") and debug_profile is not None:
+        result["debug"] = debug_profile
+    return result
 
 
 def write_json(path, result):

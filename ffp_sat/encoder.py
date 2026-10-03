@@ -1,33 +1,66 @@
+from collections import Counter
 from pathlib import Path
+from statistics import fmean
 
 from .totalizer import AtMost
 from .variables import VarManager
 
 
 class Encoder:
-    def __init__(self, instance, firefighters, solver, distance, capture_cnf=False):
+    DEBUG_GROUPS = (
+        "initial", "burn_monotonic", "defense_monotonic", "exclusivity",
+        "action_definition", "fire_spread", "no_spontaneous_burning",
+        "firefighter_totalizer", "containment", "objective_totalizer", "preprocessing",
+    )
+
+    def __init__(
+        self, instance, firefighters, solver, distance,
+        capture_cnf=False, debug=False, capture_clauses=False,
+    ):
         self.instance, self.firefighters, self.solver = instance, firefighters, solver
         self.distance = distance
         self.vars = VarManager(capture_names=capture_cnf)
         self.b, self.d, self.a, self.h, self.objectives = {}, {}, {}, {}, {}
         self.horizon = 0
         self.clauses = 0
-        self.cnf = [] if capture_cnf else None
+        self.cnf = [] if capture_cnf or capture_clauses else None
+        self.debug = debug
+        self._debug_groups = {
+            name: {"count": 0, "literals": 0, "min_length": None, "max_length": 0, "auxiliary_vars": 0}
+            for name in self.DEBUG_GROUPS
+        } if debug else None
+        self._clause_histogram = {key: 0 for key in ("1", "2", "3", "4-8", "9-16", ">16")} if debug else None
+        self._no_spontaneous_histogram = dict.fromkeys(self._clause_histogram, 0) if debug else None
+        self._no_spontaneous_lengths = [] if debug else None
         self.extensions = 0
         self.trees = []
         for v in range(instance.n):
             self.b[v, 0] = self.vars.new(f"b[{v},0]")
             self.d[v, 0] = self.vars.new(f"d[{v},0]")
-            self.add([self.b[v, 0] if v in instance.initial_fire else -self.b[v, 0]])
-            self.add([-self.d[v, 0]])
+            self.add([self.b[v, 0] if v in instance.initial_fire else -self.b[v, 0]], "initial")
+            self.add([-self.d[v, 0]], "initial")
         self._add_containment(0)
 
-    def add(self, clause):
+    def add(self, clause, group=None):
         clause = list(clause)
         self.solver.add_clause(clause)
         if self.cnf is not None:
             self.cnf.append(clause)
         self.clauses += 1
+        if self._debug_groups is not None:
+            if group is None:
+                raise AssertionError("Every debug clause must have a profile group")
+            profile = self._debug_groups[group]
+            length = len(clause)
+            profile["count"] += 1
+            profile["literals"] += length
+            profile["min_length"] = length if profile["min_length"] is None else min(profile["min_length"], length)
+            profile["max_length"] = max(profile["max_length"], length)
+            bucket = "1" if length == 1 else "2" if length == 2 else "3" if length == 3 else "4-8" if length <= 8 else "9-16" if length <= 16 else ">16"
+            self._clause_histogram[bucket] += 1
+            if group == "no_spontaneous_burning":
+                self._no_spontaneous_histogram[bucket] += 1
+                self._no_spontaneous_lengths.append(length)
 
     def ensure_horizon(self, target):
         if target < 0:
@@ -42,20 +75,26 @@ class Encoder:
                 self.a[v, t] = self.vars.new(f"a[{v},{t}]")
             for v in range(self.instance.n):
                 b, bp, d, dp, a = self.b[v, t], self.b[v, t - 1], self.d[v, t], self.d[v, t - 1], self.a[v, t]
-                for clause in ([-bp, b], [-dp, d], [-b, -d], [-a, d], [-a, -dp], [-d, dp, a]):
-                    self.add(clause)
+                self.add([-bp, b], "burn_monotonic")
+                self.add([-dp, d], "defense_monotonic")
+                self.add([-b, -d], "exclusivity")
+                for clause in ([-a, d], [-a, -dp], [-d, dp, a]):
+                    self.add(clause, "action_definition")
                 for u in sorted(self.instance.adjacency[v]):
-                    self.add([-self.b[u, t - 1], d, b])
-                self.add([-b, bp] + [self.b[u, t - 1] for u in sorted(self.instance.adjacency[v])])
+                    self.add([-self.b[u, t - 1], d, b], "fire_spread")
+                self.add([-b, bp] + [self.b[u, t - 1] for u in sorted(self.instance.adjacency[v])], "no_spontaneous_burning")
                 if t < self.distance[v]:
-                    self.add([-b])
+                    self.add([-b], "preprocessing")
+            aux_before = self.vars.auxiliary
             tree = AtMost([self.a[v, t] for v in range(self.instance.n)], self.firefighters, self.vars)
+            if self._debug_groups is not None:
+                self._debug_groups["firefighter_totalizer"]["auxiliary_vars"] += self.vars.auxiliary - aux_before
             self.trees.append(tree)
             for clause in tree.clauses:
-                self.add(clause)
+                self.add(clause, "firefighter_totalizer")
             bound = tree.assumption(self.firefighters)
             if bound is not None:
-                self.add([bound])
+                self.add([bound], "firefighter_totalizer")
             self._add_containment(t)
         self.horizon = target
 
@@ -65,7 +104,7 @@ class Encoder:
         # one. Check each orientation of every undirected edge.
         for u in range(self.instance.n):
             for v in sorted(self.instance.adjacency[u]):
-                self.add([-self.h[t], -self.b[u, t], self.b[v, t], self.d[v, t]])
+                self.add([-self.h[t], -self.b[u, t], self.b[v, t], self.d[v, t]], "containment")
 
     def export_dimacs(self, prefix, assumptions, horizon, burned_bound):
         """Write this query's cumulative CNF, including its active assumptions."""
@@ -97,11 +136,14 @@ class Encoder:
 
     def assumptions(self, t, k, upper):
         if t not in self.objectives:
+            aux_before = self.vars.auxiliary
             tree = AtMost([self.b[v, t] for v in range(self.instance.n)], upper, self.vars)
+            if self._debug_groups is not None:
+                self._debug_groups["objective_totalizer"]["auxiliary_vars"] += self.vars.auxiliary - aux_before
             self.objectives[t] = tree
             self.trees.append(tree)
             for clause in tree.clauses:
-                self.add(clause)
+                self.add(clause, "objective_totalizer")
         bound = self.objectives[t].assumption(k)
         return [self.h[t]] + ([bound] if bound is not None else [])
 
@@ -120,6 +162,51 @@ class Encoder:
             n_clauses=self.clauses,
             number_of_horizon_extensions=self.extensions,
         )
+
+    def debug_profile(self):
+        if self._debug_groups is None:
+            return None
+        clauses = {}
+        for name, values in self._debug_groups.items():
+            count = values["count"]
+            clauses[name] = {
+                "number_of_clauses": count,
+                "number_of_literals": values["literals"],
+                "min_clause_length": values["min_length"],
+                "max_clause_length": values["max_length"] if count else None,
+                "average_clause_length": values["literals"] / count if count else 0.0,
+                "auxiliary_variables": values["auxiliary_vars"],
+            }
+        totalizers = (
+            clauses["firefighter_totalizer"]["number_of_clauses"]
+            + clauses["objective_totalizer"]["number_of_clauses"]
+        )
+        total_clauses = sum(row["number_of_clauses"] for row in clauses.values())
+        total_vars = self.vars.top
+        return {
+            "variables": {
+                "semantic": self.vars.semantic,
+                "activation": self.vars.activation,
+                "auxiliary": self.vars.auxiliary,
+                "total": total_vars,
+                "auxiliary_ratio": self.vars.auxiliary / total_vars if total_vars else 0.0,
+            },
+            "clauses": clauses,
+            "total_clauses": total_clauses,
+            "totalizer_clause_ratio": totalizers / total_clauses if total_clauses else 0.0,
+            "clause_length_histogram": dict(self._clause_histogram),
+            "no_spontaneous_length_histogram": dict(self._no_spontaneous_histogram),
+            "no_spontaneous_exact_length_histogram": {
+                str(length): count for length, count in sorted(Counter(self._no_spontaneous_lengths).items())
+            },
+            "no_spontaneous_clause_length_stats": self._length_stats(self._no_spontaneous_lengths),
+        }
+
+    @staticmethod
+    def _length_stats(values):
+        if not values:
+            return {"min": None, "max": None, "mean": 0.0}
+        return {"min": min(values), "max": max(values), "mean": fmean(values)}
 
     def close(self):
         for tree in self.trees:

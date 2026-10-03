@@ -32,6 +32,7 @@ def add_options(parser):
     parser.add_argument("--time-limit", type=positive_float, default=600.0)
     parser.add_argument("--solver", default="cadical300")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--debug", action="store_true", help="Add CNF and search profiles to JSON output")
     parser.add_argument("--heuristic-budget", type=positive_float)
     parser.add_argument("--initial-horizon-factor", type=horizon_factor, default=1.5)
     parser.add_argument("--horizon-growth-factor", type=horizon_factor, default=2.0)
@@ -46,6 +47,7 @@ def configuration(args):
         time_limit=args.time_limit,
         solver=args.solver,
         seed=args.seed,
+        debug=args.debug,
         heuristic_budget=args.heuristic_budget
         if args.heuristic_budget is not None
         else min(5.0, 0.05 * args.time_limit),

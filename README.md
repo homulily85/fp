@@ -45,6 +45,13 @@ unit clauses để biểu diễn một bài toán SAT độc lập. Nếu prepro
 chứng minh tối ưu và không chạy SAT query thì không tạo file. Batch đặt tên file theo
 instance, D và seed để tách các lượt chạy.
 
+Thêm `--debug` để JSON kết quả có profile kích thước CNF theo nhóm ràng buộc,
+histogram độ dài clause, thống kê bậc đỉnh và propagation profile theo query.
+Propagation chỉ chạy khi bật tùy chọn này và dùng solver chẩn đoán tạm; debug có thể
+tăng đáng kể RAM và thời gian chạy. Nếu backend không hỗ trợ API đó, JSON ghi rõ lý
+do và solver vẫn tiếp tục giải bình thường. Chi tiết các trường xem
+phần CNF và search profile trong [hướng dẫn đọc kết quả](docs/RESULTS.md).
+
 stdout in summary. stderr chỉ ghi khi có cập nhật trạng thái, kèm nguồn `HEURISTIC`,
 `PREPROCESS`, `SAT_QUERY`, `SAT`, `UNSAT` hoặc `CNF_EXPORT`; `SAT_QUERY` có horizon và objective bound, các dòng `SAT`/`UNSAT` ghi kết quả truy vấn tương ứng.
 Không in log định kỳ khi trạng thái không đổi. Exit code:
