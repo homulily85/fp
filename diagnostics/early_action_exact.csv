@@ -1,0 +1,9 @@
+record_type,mode,stage,horizon,K,result,solve_time,actual_containment_time,actual_k,variables,clauses,assumptions,variables_before_solve,clauses_before_solve,early_exact_rounds,decisions,conflicts,propagations,restarts,stats
+containment,,,5,,SAT,0.003517135002766736,5,,26991,105503,[26991],,,,,,,,"{""decisions"": 0, ""conflicts"": 0, ""propagations"": 0, ""restarts"": 0}"
+containment,,,4,,UNSAT,0.062304803999722935,,,21993,86888,[21993],,,,,,,,"{""decisions"": 2553, ""conflicts"": 179, ""propagations"": 185246, ""restarts"": 4}"
+master,base,replay,9,991,SAT,27.586262833006913,,991,,,"[46983, 55947]",55947,214806,[],,,,,"{""decisions"": 483968, ""conflicts"": 127951, ""propagations"": 259210386, ""restarts"": 1633}"
+master,base,replay,9,990,SAT,19.00396655499935,,990,,,"[46983, 56938]",56938,218769,[],,,,,"{""decisions"": 285138, ""conflicts"": 77017, ""propagations"": 189453466, ""restarts"": 1430}"
+master,base,final,9,989,TIMEOUT,600.0,,,,,"[46983, 57928]",57928,222728,[],,,,,null
+master,early-exact,replay,9,991,SAT,26.749598834998324,,991,,,"[46983, 55947]",55947,214806,"[1, 2, 3, 4, 5]",,,,,"{""decisions"": 483968, ""conflicts"": 127951, ""propagations"": 259210386, ""restarts"": 1633}"
+master,early-exact,replay,9,990,SAT,18.443246306997025,,990,,,"[46983, 56938]",56938,218769,"[1, 2, 3, 4, 5]",,,,,"{""decisions"": 285138, ""conflicts"": 77017, ""propagations"": 189453466, ""restarts"": 1430}"
+master,early-exact,final,9,989,TIMEOUT,600.0,,,,,"[46983, 57928]",57928,222733,"[1, 2, 3, 4, 5]",,,,,null

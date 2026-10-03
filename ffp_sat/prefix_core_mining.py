@@ -337,6 +337,8 @@ def _master_replay_worker(
     mode,
     cores,
     expected_history,
+    early_exact_minimum,
+    early_exact_range,
 ):
     solver = encoder = None
     metrics = {"mode": mode, "result": "ERROR", "stages": [], "imported_core_clauses": []}
@@ -415,6 +417,16 @@ def _master_replay_worker(
                 metrics["imported_core_clauses"].append(
                     {"semantic_core": [list(item) for item in core], "clause": clause}
                 )
+        elif mode == "early-exact":
+            from .early_exact import append_early_exact_actions
+
+            append_stats = append_early_exact_actions(
+                encoder, solver, early_exact_minimum, early_exact_range
+            )
+            expected_clause_count = len(append_stats["rounds"])
+            if append_stats["variables_added"] != 0 or append_stats["clauses_added"] != expected_clause_count:
+                raise AssertionError(f"Unexpected EARLY-EXACT append statistics: {append_stats}")
+            metrics["early_exact_append"] = append_stats
         metrics.update(
             imported_clause_count=len(metrics["imported_core_clauses"]),
             imported_clause_literals=sum(
@@ -448,6 +460,14 @@ def _master_replay_worker(
         if satisfiable:
             model = set(solver.get_model())
             schedule = [list(actions) for actions in encoder.decode(model, horizon)]
+            if mode == "early-exact" and any(
+                len(schedule[t - 1]) != 1
+                for t in range(
+                    1,
+                    early_exact_minimum + (early_exact_range == "through"),
+                )
+            ):
+                raise AssertionError("EARLY-EXACT SAT replay violated a required action round")
             solution = simulate(instance, firefighters, schedule)
             if solution.k > final_bound or solution.containment_time > horizon:
                 raise AssertionError("Master final SAT model failed simulator validation")
@@ -482,6 +502,8 @@ def run_master_replay(
     replay_timeout,
     final_timeout,
     expected_history=None,
+    early_exact_minimum=0,
+    early_exact_range="through",
 ):
     context = multiprocessing.get_context("spawn")
     receiver, sender = context.Pipe(duplex=False)
@@ -490,6 +512,7 @@ def run_master_replay(
         args=(
             sender, str(path), firefighters, solver_name, horizon, final_bound,
             tuple(replay_bounds), mode, cores, expected_history,
+            early_exact_minimum, early_exact_range,
         ),
     )
     started = time.monotonic()

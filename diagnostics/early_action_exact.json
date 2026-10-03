@@ -1,0 +1,460 @@
+{
+  "query": {
+    "T": 9,
+    "K": 989
+  },
+  "config": {
+    "instance": "dataset/1000_ep0.0075_0_gilbert_1.in",
+    "firefighters": 1,
+    "solver": "cadical300",
+    "known_containment_upper": 6,
+    "containment_query_time": 120.0,
+    "replay_bounds": [
+      991,
+      990
+    ],
+    "replay_query_time": 90.0,
+    "final_query_time": 600.0,
+    "exact_range": "through"
+  },
+  "small_graph_equivalence": {
+    "passed": true,
+    "seed": 0,
+    "graph_cases": 88,
+    "queries_checked": 985,
+    "last_containment_round_case": {
+      "T_min": 2,
+      "passed": true
+    },
+    "scope": "D=1, exhaustive n<=3 plus seeded n=4..6 and explicit Tmin=2 idle-final case"
+  },
+  "containment_search": {
+    "known_upper": 6,
+    "queries": [
+      {
+        "horizon": 5,
+        "result": "SAT",
+        "encoding_time": 0.07858158099406864,
+        "variables": 26991,
+        "clauses": 105503,
+        "assumptions": [
+          26991
+        ],
+        "objective_counters": false,
+        "objective_auxiliary_variables": 0,
+        "solve_time": 0.003517135002766736,
+        "stats": {
+          "decisions": 0,
+          "conflicts": 0,
+          "propagations": 0,
+          "restarts": 0
+        },
+        "actual_containment_time": 5,
+        "burned_count": 995,
+        "schedule": [
+          [
+            1
+          ],
+          [
+            2
+          ],
+          [
+            3
+          ],
+          [
+            20
+          ],
+          [
+            269
+          ]
+        ],
+        "worker_wall_time": 0.1508501219941536
+      },
+      {
+        "horizon": 4,
+        "result": "UNSAT",
+        "encoding_time": 0.06306944000243675,
+        "variables": 21993,
+        "clauses": 86888,
+        "assumptions": [
+          21993
+        ],
+        "objective_counters": false,
+        "objective_auxiliary_variables": 0,
+        "solve_time": 0.062304803999722935,
+        "stats": {
+          "decisions": 2553,
+          "conflicts": 179,
+          "propagations": 185246,
+          "restarts": 4
+        },
+        "worker_wall_time": 0.18583768101234455
+      }
+    ],
+    "min_containment_time": 5,
+    "proved": true,
+    "upper_source": "provided_schedule",
+    "upper_witness": {
+      "schedule": [
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          20
+        ],
+        [
+          269
+        ]
+      ],
+      "containment_time": 5
+    }
+  },
+  "early_exact": {
+    "range": "through",
+    "rounds": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "variables_added": 0,
+    "clauses_added": 5,
+    "small_graph_equivalence_passed": true
+  },
+  "master_comparison": {
+    "base": {
+      "mode": "base",
+      "result": "TIMEOUT",
+      "stages": [
+        {
+          "index": 0,
+          "stage": "replay",
+          "K": 991,
+          "assumptions": [
+            46983,
+            55947
+          ],
+          "variables_before_solve": 55947,
+          "clauses_before_solve": 214806,
+          "result": "SAT",
+          "solve_time": 27.586262833006913,
+          "stats": {
+            "decisions": 483968,
+            "conflicts": 127951,
+            "propagations": 259210386,
+            "restarts": 1633
+          },
+          "actual_k": 991,
+          "containment_time": 6,
+          "schedule": [
+            [
+              568
+            ],
+            [
+              546
+            ],
+            [
+              599
+            ],
+            [
+              182
+            ],
+            [
+              977
+            ],
+            [
+              269
+            ]
+          ]
+        },
+        {
+          "index": 1,
+          "stage": "replay",
+          "K": 990,
+          "assumptions": [
+            46983,
+            56938
+          ],
+          "variables_before_solve": 56938,
+          "clauses_before_solve": 218769,
+          "result": "SAT",
+          "solve_time": 19.00396655499935,
+          "stats": {
+            "decisions": 285138,
+            "conflicts": 77017,
+            "propagations": 189453466,
+            "restarts": 1430
+          },
+          "actual_k": 990,
+          "containment_time": 6,
+          "schedule": [
+            [
+              568
+            ],
+            [
+              546
+            ],
+            [
+              599
+            ],
+            [
+              67
+            ],
+            [
+              732
+            ],
+            [
+              269
+            ]
+          ]
+        },
+        {
+          "index": 2,
+          "stage": "final",
+          "K": 989,
+          "assumptions": [
+            46983,
+            57928
+          ],
+          "variables_before_solve": 57928,
+          "clauses_before_solve": 222728,
+          "imported_core_clauses": 0,
+          "result": "TIMEOUT",
+          "solve_time": 600.0,
+          "stats": null
+        }
+      ],
+      "imported_core_clauses": [],
+      "pre_append_signature": {
+        "history": [
+          {
+            "K": 991,
+            "result": "SAT",
+            "stats": {
+              "decisions": 483968,
+              "conflicts": 127951,
+              "propagations": 259210386,
+              "restarts": 1633
+            },
+            "variables_before_solve": 55947,
+            "clauses_before_solve": 214806,
+            "assumptions": [
+              46983,
+              55947
+            ]
+          },
+          {
+            "K": 990,
+            "result": "SAT",
+            "stats": {
+              "decisions": 285138,
+              "conflicts": 77017,
+              "propagations": 189453466,
+              "restarts": 1430
+            },
+            "variables_before_solve": 56938,
+            "clauses_before_solve": 218769,
+            "assumptions": [
+              46983,
+              56938
+            ]
+          }
+        ],
+        "variables": 57928,
+        "clauses": 222728,
+        "assumptions": [
+          46983,
+          57928
+        ]
+      },
+      "imported_clause_count": 0,
+      "imported_clause_literals": 0,
+      "final_variables": 57928,
+      "final_clauses": 222728,
+      "failed_stage": "final",
+      "failed_bound": 989,
+      "wall_time": 646.8390298529994
+    },
+    "early-exact": {
+      "mode": "early-exact",
+      "result": "TIMEOUT",
+      "stages": [
+        {
+          "index": 0,
+          "stage": "replay",
+          "K": 991,
+          "assumptions": [
+            46983,
+            55947
+          ],
+          "variables_before_solve": 55947,
+          "clauses_before_solve": 214806,
+          "result": "SAT",
+          "solve_time": 26.749598834998324,
+          "stats": {
+            "decisions": 483968,
+            "conflicts": 127951,
+            "propagations": 259210386,
+            "restarts": 1633
+          },
+          "actual_k": 991,
+          "containment_time": 6,
+          "schedule": [
+            [
+              568
+            ],
+            [
+              546
+            ],
+            [
+              599
+            ],
+            [
+              182
+            ],
+            [
+              977
+            ],
+            [
+              269
+            ]
+          ]
+        },
+        {
+          "index": 1,
+          "stage": "replay",
+          "K": 990,
+          "assumptions": [
+            46983,
+            56938
+          ],
+          "variables_before_solve": 56938,
+          "clauses_before_solve": 218769,
+          "result": "SAT",
+          "solve_time": 18.443246306997025,
+          "stats": {
+            "decisions": 285138,
+            "conflicts": 77017,
+            "propagations": 189453466,
+            "restarts": 1430
+          },
+          "actual_k": 990,
+          "containment_time": 6,
+          "schedule": [
+            [
+              568
+            ],
+            [
+              546
+            ],
+            [
+              599
+            ],
+            [
+              67
+            ],
+            [
+              732
+            ],
+            [
+              269
+            ]
+          ]
+        },
+        {
+          "index": 2,
+          "stage": "final",
+          "K": 989,
+          "assumptions": [
+            46983,
+            57928
+          ],
+          "variables_before_solve": 57928,
+          "clauses_before_solve": 222733,
+          "imported_core_clauses": 0,
+          "result": "TIMEOUT",
+          "solve_time": 600.0,
+          "stats": null
+        }
+      ],
+      "imported_core_clauses": [],
+      "pre_append_signature": {
+        "history": [
+          {
+            "K": 991,
+            "result": "SAT",
+            "stats": {
+              "decisions": 483968,
+              "conflicts": 127951,
+              "propagations": 259210386,
+              "restarts": 1633
+            },
+            "variables_before_solve": 55947,
+            "clauses_before_solve": 214806,
+            "assumptions": [
+              46983,
+              55947
+            ]
+          },
+          {
+            "K": 990,
+            "result": "SAT",
+            "stats": {
+              "decisions": 285138,
+              "conflicts": 77017,
+              "propagations": 189453466,
+              "restarts": 1430
+            },
+            "variables_before_solve": 56938,
+            "clauses_before_solve": 218769,
+            "assumptions": [
+              46983,
+              56938
+            ]
+          }
+        ],
+        "variables": 57928,
+        "clauses": 222728,
+        "assumptions": [
+          46983,
+          57928
+        ]
+      },
+      "early_exact_append": {
+        "rounds": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "added_rounds": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "variables_added": 0,
+        "clauses_added": 5,
+        "append_time": 0.0004791450046468526
+      },
+      "imported_clause_count": 0,
+      "imported_clause_literals": 0,
+      "final_variables": 57928,
+      "final_clauses": 222733,
+      "failed_stage": "final",
+      "failed_bound": 989,
+      "wall_time": 645.4355636370019,
+      "history_matches_base": true
+    }
+  },
+  "result": "COMPLETED"
+}

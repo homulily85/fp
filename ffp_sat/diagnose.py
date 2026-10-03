@@ -13,6 +13,7 @@ from pysat.solvers import Solver
 
 from .action_canonical import ActionCanonicalEncoding
 from .canonical import CanonicalActionEncoding
+from .early_exact import run_early_exact_experiment
 from .encoder import Encoder
 from .guidance import PhaseMode, build_consensus_pool, build_phase_literals, validate_phase_literals
 from .instance import read_instance
@@ -1668,6 +1669,23 @@ def main(argv=None):
     trie_mining.add_argument("--promote-time", type=positive_float, default=0.0)
     trie_mining.add_argument("--solver", default="cadical300")
     trie_mining.add_argument("--out-dir", type=Path)
+    early_exact = subparsers.add_parser(
+        "early-action-exact",
+        help="Prove minimum containment time and late-append early action clauses",
+    )
+    early_exact.add_argument("instance", type=Path)
+    early_exact.add_argument("--firefighters", type=positive_int, required=True)
+    early_exact.add_argument("--T", type=nonnegative_int, required=True)
+    early_exact.add_argument("--K", type=nonnegative_int, required=True)
+    early_exact.add_argument("--known-containment-upper", type=nonnegative_int, required=True)
+    early_exact.add_argument("--upper-schedule", type=Path)
+    early_exact.add_argument("--containment-query-time", type=positive_float, default=120.0)
+    early_exact.add_argument("--replay-bounds", type=nonnegative_int, nargs="+", required=True)
+    early_exact.add_argument("--replay-query-time", type=positive_float, default=90.0)
+    early_exact.add_argument("--final-query-time", type=positive_float, default=600.0)
+    early_exact.add_argument("--exact-range", choices=["before", "through"], default="through")
+    early_exact.add_argument("--solver", default="cadical300")
+    early_exact.add_argument("--out-dir", type=Path)
     args = parser.parse_args(argv)
 
     try:
@@ -1759,6 +1777,78 @@ def main(argv=None):
                     writer.writerow({"record_type": "master", "mode": mode, **stage, "stats": json.dumps(stage.get("stats"))})
         print(f"Result: {report['result']}\nJSON: {json_path}\nCSV: {csv_path}", flush=True)
         return int(report["result"] in {"ERROR", "SANITY_FAILED", "HISTORY_MISMATCH"})
+    if args.experiment == "early-action-exact":
+        if args.firefighters != 1:
+            parser.error("early-action-exact currently requires --firefighters 1")
+        if args.known_containment_upper > args.T:
+            parser.error("--known-containment-upper must not exceed --T")
+        if args.K > instance.n:
+            parser.error("--K must not exceed the number of vertices")
+        if any(k <= args.K or k > instance.n for k in args.replay_bounds):
+            parser.error("Every replay bound must be greater than --K and at most n")
+        if any(left <= right for left, right in zip(args.replay_bounds, args.replay_bounds[1:])):
+            parser.error("--replay-bounds must be strictly descending")
+        upper_schedule = None
+        if args.upper_schedule is not None:
+            try:
+                upper_schedule, _ = load_result_schedule(args.upper_schedule)
+            except (OSError, ValueError, TypeError) as exc:
+                parser.error(f"Cannot read upper containment schedule: {exc}")
+        try:
+            report = run_early_exact_experiment(
+                args.instance,
+                args.firefighters,
+                args.solver,
+                args.T,
+                args.K,
+                args.known_containment_upper,
+                args.containment_query_time,
+                args.replay_bounds,
+                args.replay_query_time,
+                args.final_query_time,
+                args.exact_range,
+                upper_schedule,
+            )
+        except (OSError, ValueError, TypeError, RuntimeError, AssertionError) as exc:
+            parser.error(f"Early-action-exact diagnostic failed: {exc}")
+        out_dir = args.out_dir or Path("diagnostics")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        json_path = out_dir / "early_action_exact.json"
+        json_path.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+        csv_path = out_dir / "early_action_exact.csv"
+        fields = (
+            "record_type", "mode", "stage", "horizon", "K", "result", "solve_time",
+            "actual_containment_time", "actual_k", "variables", "clauses", "assumptions",
+            "variables_before_solve", "clauses_before_solve", "early_exact_rounds",
+            "decisions", "conflicts", "propagations", "restarts", "stats",
+        )
+        with csv_path.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
+            writer.writeheader()
+            for row in report.get("containment_search", {}).get("queries", []):
+                writer.writerow({"record_type": "containment", **row,
+                                 "horizon": row.get("horizon"),
+                                 "assumptions": json.dumps(row.get("assumptions")),
+                                 "stats": json.dumps(row.get("stats"))})
+            for mode, case in report.get("master_comparison", {}).items():
+                for row in case.get("stages", []):
+                    writer.writerow({"record_type": "master", "mode": mode, **row,
+                                     "horizon": args.T,
+                                     "early_exact_rounds": json.dumps(
+                                         case.get("early_exact_append", {}).get("rounds", [])
+                                     ),
+                                     "assumptions": json.dumps(row.get("assumptions")),
+                                     "stats": json.dumps(row.get("stats"))})
+        print(
+            f"Result: {report.get('result', 'UNKNOWN')}\n"
+            f"T_min: {report.get('containment_search', {}).get('min_containment_time')}\n"
+            f"Delta clauses: {report.get('early_exact', {}).get('clauses_added')}\n"
+            f"BASE: {report.get('master_comparison', {}).get('base', {}).get('result')}\n"
+            f"EARLY-EXACT: {report.get('master_comparison', {}).get('early-exact', {}).get('result')}\n"
+            f"JSON: {json_path}\nCSV: {csv_path}",
+            flush=True,
+        )
+        return int(report.get("result") in {"ERROR", "HISTORY_MISMATCH", "CONTAINMENT_QUERY_ERROR"})
     if args.experiment == "prefix-trie-mining":
         if args.firefighters != 1:
             parser.error("prefix-trie-mining currently requires --firefighters 1")

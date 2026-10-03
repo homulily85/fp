@@ -294,3 +294,38 @@ The report distinguishes `UNSAT_PROPAGATION`, `UNSAT_SOLVE`, `TIMEOUT`, and
 does not call a prefix minimal unless every shorter ancestor was also proved
 UNSAT. Mined prefixes are acceleration data, not a proof that the unprobed
 search space is UNSAT.
+
+### Early action exactness
+
+`early-action-exact` first runs a containment-only search to prove the earliest
+containment round. It validates a supplied upper schedule when present; without
+one, it obtains a SAT witness at the stated upper bound. It then checks lower
+horizons with fresh solver processes. A timeout leaves the minimum unknown and
+stops the experiment before any action clauses are added.
+
+Before the full instance runs, the command checks BASE/EARLY-EXACT SAT
+equivalence against a brute-force oracle on exhaustive graphs up to three
+vertices, seeded graphs of four to six vertices, and an explicit idle-final
+containment case. For one firefighter, EARLY-EXACT adds one disjunction of
+round action variables for each proved early round; it introduces no new
+variables. `--exact-range through` includes the minimum-containment round,
+while `before` omits that round.
+
+```bash
+python -m ffp_sat.diagnose early-action-exact \
+  dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --T 9 --K 989 \
+  --known-containment-upper 6 \
+  --upper-schedule /tmp/ffp-diagnostic-incumbent.json \
+  --containment-query-time 120 \
+  --replay-bounds 991 990 --replay-query-time 90 \
+  --final-query-time 600 --solver cadical300
+```
+
+The replay is late-append: BASE and EARLY-EXACT solve the same bounds first,
+then the exact-action clauses are appended only to EARLY-EXACT after the final
+query has been built. It verifies the pre-append formula and history match,
+checks that zero variables and exactly one clause per requested round were
+added, and validates any SAT schedule with the simulator. Results are written
+to `diagnostics/early_action_exact.json` and `.csv`; a new SAT schedule is also
+saved as `diagnostics/early_exact_solution.json`.
