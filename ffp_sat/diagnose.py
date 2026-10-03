@@ -919,6 +919,519 @@ def action_canonical_experiment(path, firefighters, solver, horizon, bound, mode
     return cases
 
 
+def _stage_stats_delta(before, after):
+    return {
+        key: after.get(key, 0) - before.get(key, 0)
+        for key in ("decisions", "conflicts", "propagations", "restarts")
+    }
+
+
+def _stage_timeout_result(stage_name):
+    return "REPLAY_TIMEOUT" if stage_name == "replay" else "TIMEOUT"
+
+
+def _action_canonical_replay_worker(
+    connection,
+    path,
+    firefighters,
+    solver_name,
+    horizon,
+    final_bound,
+    replay_bounds,
+    replay_style,
+    mode,
+):
+    solver = encoder = None
+    metrics = {
+        "experiment": "action_canonical_replay",
+        "mode": mode,
+        "replay_style": replay_style,
+        "T": horizon,
+        "K": final_bound,
+        "replay_bounds": list(replay_bounds),
+        "result": "ERROR",
+        "stages": [],
+    }
+    try:
+        instance = read_instance(path)
+        distance, _ = preprocess(instance, firefighters)
+        solver = Solver(name=solver_name)
+        encoding_started = time.monotonic()
+        encoder = Encoder(instance, firefighters, solver, distance)
+        encoder.ensure_horizon(horizon)
+
+        first_assumptions = encoder.assumptions(horizon, replay_bounds[0], instance.n)
+        metrics.update(
+            base_variables_at_first_query=encoder.vars.top,
+            base_clauses_at_first_query=encoder.clauses,
+            first_query_assumptions=list(first_assumptions),
+            base_encoding_time=time.monotonic() - encoding_started,
+        )
+        connection.send(("CASE_PROGRESS", metrics))
+
+        action_encoding = ActionCanonicalEncoding(encoder, firefighters)
+        canonical_added = False
+
+        def add_canonical():
+            nonlocal canonical_added
+            if canonical_added or mode == "base":
+                return
+            action_encoding.add_indicators(horizon)
+            if mode in {"prefix", "canonical"}:
+                action_encoding.add_prefix_rules(horizon)
+            if mode == "canonical":
+                action_encoding.add_full_capacity_rules(horizon)
+            canonical_added = True
+
+        if replay_style == "integrated":
+            canonical_started = time.monotonic()
+            add_canonical()
+            metrics["canonical_append_time"] = time.monotonic() - canonical_started
+            initial_stats = action_encoding.stats()
+            metrics.update(
+                canonical_variables=len(action_encoding.y)
+                + initial_stats["full_capacity_auxiliary_variables"],
+                canonical_clauses=sum(
+                    initial_stats[key]
+                    for key in ("indicator_clauses", "prefix_clauses", "full_capacity_clauses")
+                ),
+                **initial_stats,
+            )
+            connection.send(("CASE_PROGRESS", metrics))
+
+        bounds = [*replay_bounds, final_bound]
+        for index, bound in enumerate(bounds):
+            stage_name = "replay" if index < len(replay_bounds) else "final"
+            assumption_started = time.monotonic()
+            assumptions = (
+                first_assumptions
+                if index == 0
+                else encoder.assumptions(horizon, bound, instance.n)
+            )
+            assumption_time = time.monotonic() - assumption_started
+
+            if replay_style == "late-append" and stage_name == "final":
+                metrics.update(
+                    pre_canonical_variables=encoder.vars.top,
+                    pre_canonical_clauses=encoder.clauses,
+                    pre_canonical_assumptions=list(assumptions),
+                )
+                canonical_started = time.monotonic()
+                add_canonical()
+                metrics["canonical_append_time"] = time.monotonic() - canonical_started
+                action_stats = action_encoding.stats()
+                metrics.update(
+                    canonical_variables=len(action_encoding.y)
+                    + action_stats["full_capacity_auxiliary_variables"],
+                    canonical_clauses=sum(
+                        action_stats[key]
+                        for key in ("indicator_clauses", "prefix_clauses", "full_capacity_clauses")
+                    ),
+                    **action_stats,
+                )
+                connection.send(("CASE_PROGRESS", metrics))
+
+            action_stats = action_encoding.stats()
+            canonical_clause_count = sum(
+                action_stats[key]
+                for key in ("indicator_clauses", "prefix_clauses", "full_capacity_clauses")
+            )
+            stage = {
+                "index": index,
+                "stage": stage_name,
+                "K": bound,
+                "result": None,
+                "assumptions": list(assumptions),
+                "assumption_build_time": assumption_time,
+                "variables_before_solve": encoder.vars.top,
+                "clauses_before_solve": encoder.clauses + canonical_clause_count,
+                "canonical_variables": len(action_encoding.y)
+                + action_stats["full_capacity_auxiliary_variables"],
+                "canonical_clauses": canonical_clause_count,
+                "stats": None,
+            }
+            metrics["stages"].append(stage)
+            connection.send(("CASE_PROGRESS", metrics))
+            connection.send(("STAGE_STARTED", {"stage": stage_name, "K": bound, "index": index}))
+            before = solver.accum_stats() if hasattr(solver, "accum_stats") else {}
+            solve_started = time.monotonic()
+            satisfiable = solver.solve(assumptions=assumptions)
+            solve_time = time.monotonic() - solve_started
+            after = solver.accum_stats() if hasattr(solver, "accum_stats") else {}
+            stats = _stage_stats_delta(before, after)
+            result = "SAT" if satisfiable else "UNSAT"
+            rates = {
+                "decisions_per_second": stats["decisions"] / solve_time if solve_time else None,
+                "conflicts_per_decision": (
+                    stats["conflicts"] / stats["decisions"] if stats["decisions"] else None
+                ),
+                "propagations_per_decision": (
+                    stats["propagations"] / stats["decisions"] if stats["decisions"] else None
+                ),
+            }
+            stage.update(result=result, solve_time=solve_time, stats=stats, **stats, **rates)
+            connection.send(("STAGE_SOLVED", {"index": index, "result": result, "solve_time": solve_time}))
+            if satisfiable:
+                model = set(solver.get_model())
+                schedule = [list(actions) for actions in encoder.decode(model, horizon)]
+                solution = simulate(instance, firefighters, schedule)
+                if solution.k > bound or solution.containment_time > horizon:
+                    raise AssertionError(f"SAT model at K={bound} failed simulator validation")
+                stage.update(
+                    actual_k=solution.k,
+                    containment_time=solution.containment_time,
+                    schedule=[list(actions) for actions in solution.schedule],
+                )
+            connection.send(("STAGE_RESULT", stage))
+            connection.send(("CASE_PROGRESS", metrics))
+
+        metrics.update(
+            result=metrics["stages"][-1]["result"],
+            canonical_variables=len(action_encoding.y)
+            + action_encoding.full_capacity_auxiliary_variables,
+            canonical_clauses=sum(
+                action_encoding.stats()[key]
+                for key in ("indicator_clauses", "prefix_clauses", "full_capacity_clauses")
+            ),
+            **action_encoding.stats(),
+        )
+        connection.send(("FINAL", metrics))
+    except Exception as exc:
+        metrics.update(result="ERROR", error=f"{type(exc).__name__}: {exc}")
+        connection.send(("ERROR", metrics))
+    finally:
+        if encoder is not None:
+            encoder.close()
+        if solver is not None:
+            solver.delete()
+        connection.close()
+
+
+def run_action_canonical_replay_case(
+    path,
+    firefighters,
+    solver_name,
+    horizon,
+    final_bound,
+    replay_bounds,
+    replay_style,
+    mode,
+    replay_timeout,
+    final_timeout,
+):
+    """Run an incremental replay with a separate parent-enforced budget per solve."""
+    context = multiprocessing.get_context("spawn")
+    receiver, sender = context.Pipe(duplex=False)
+    process = context.Process(
+        target=_action_canonical_replay_worker,
+        args=(
+            sender,
+            str(path),
+            firefighters,
+            solver_name,
+            horizon,
+            final_bound,
+            tuple(replay_bounds),
+            replay_style,
+            mode,
+        ),
+    )
+    parent_started = time.monotonic()
+    process.start()
+    sender.close()
+    latest = {"mode": mode, "replay_style": replay_style, "stages": []}
+    active_stage = None
+    stage_started = None
+    finished = False
+    timed_out_stage = None
+
+    def record_progress(payload):
+        known = {stage.get("index"): stage for stage in latest.get("stages", [])}
+        for stage in payload.get("stages", []):
+            known[stage.get("index")] = stage
+        latest.update(payload)
+        latest["stages"] = [known[index] for index in sorted(known) if index is not None]
+
+    def record_stage(stage):
+        stages = latest.setdefault("stages", [])
+        for index, known in enumerate(stages):
+            if known.get("index") == stage.get("index"):
+                stages[index] = stage
+                break
+        else:
+            stages.append(stage)
+            stages.sort(key=lambda row: row.get("index", 0))
+
+    try:
+        while process.is_alive():
+            if active_stage is None:
+                if receiver.poll(0.05):
+                    try:
+                        kind, payload = receiver.recv()
+                    except (EOFError, OSError):
+                        break
+                    if kind == "STAGE_STARTED":
+                        active_stage = payload
+                        stage_started = time.monotonic()
+                    elif kind == "STAGE_RESULT":
+                        record_stage(payload)
+                    elif kind == "STAGE_SOLVED":
+                        active_stage = None
+                        stage_started = None
+                    elif kind == "CASE_PROGRESS":
+                        record_progress(payload)
+                    elif kind == "FINAL":
+                        latest = payload
+                        finished = True
+                    elif kind == "ERROR":
+                        latest = payload
+                        finished = True
+                continue
+
+            budget = final_timeout if active_stage["stage"] == "final" else replay_timeout
+            remaining = budget - (time.monotonic() - stage_started)
+            if remaining <= 0:
+                timed_out_stage = dict(active_stage)
+                process.terminate()
+                process.join(0.2)
+                if process.is_alive():
+                    process.kill()
+                    process.join(0.2)
+                break
+            if receiver.poll(min(0.05, remaining)):
+                try:
+                    kind, payload = receiver.recv()
+                except (EOFError, OSError):
+                    break
+                if kind == "STAGE_RESULT":
+                    record_stage(payload)
+                    active_stage = None
+                    stage_started = None
+                elif kind == "STAGE_SOLVED":
+                    active_stage = None
+                    stage_started = None
+                elif kind == "CASE_PROGRESS":
+                    record_progress(payload)
+                elif kind == "FINAL":
+                    latest = payload
+                    finished = True
+                    active_stage = None
+                elif kind == "ERROR":
+                    latest = payload
+                    finished = True
+                    active_stage = None
+
+        if process.is_alive():
+            process.join(0.2)
+        while receiver.poll():
+            try:
+                kind, payload = receiver.recv()
+            except (EOFError, OSError):
+                break
+            if kind == "STAGE_RESULT":
+                record_stage(payload)
+            elif kind == "STAGE_SOLVED":
+                active_stage = None
+                stage_started = None
+            elif kind == "CASE_PROGRESS":
+                record_progress(payload)
+            elif kind == "FINAL":
+                latest = payload
+                finished = True
+            elif kind == "ERROR":
+                latest = payload
+                finished = True
+
+        if timed_out_stage is not None:
+            elapsed = time.monotonic() - stage_started if stage_started is not None else 0.0
+            existing_stage = next(
+                (
+                    stage
+                    for stage in latest.get("stages", [])
+                    if stage.get("index") == timed_out_stage.get("index")
+                ),
+                {},
+            )
+            timed_record = {
+                **existing_stage,
+                **timed_out_stage,
+                "result": "TIMEOUT",
+                "solve_time": min(
+                    final_timeout if timed_out_stage["stage"] == "final" else replay_timeout,
+                    elapsed,
+                ),
+                "stats": None,
+            }
+            record_stage(timed_record)
+            latest.update(
+                result=_stage_timeout_result(timed_out_stage["stage"]),
+                failed_stage=timed_out_stage["stage"],
+                failed_bound=timed_out_stage["K"],
+            )
+        elif not finished:
+            latest.update(result="ERROR", error=f"Worker exited with code {process.exitcode}")
+        latest.setdefault("mode", mode)
+        latest.setdefault("replay_style", replay_style)
+        latest.setdefault("stages", [])
+        latest["wall_time"] = time.monotonic() - parent_started
+        return latest
+    finally:
+        if process.is_alive():
+            process.kill()
+            process.join(0.2)
+        receiver.close()
+        process.close()
+
+
+def action_canonical_replay_experiment(
+    path,
+    firefighters,
+    solver,
+    horizon,
+    final_bound,
+    replay_bounds,
+    replay_style,
+    modes,
+    replay_timeout,
+    final_timeout,
+):
+    cases = []
+    for mode in modes:
+        case = run_action_canonical_replay_case(
+            path,
+            firefighters,
+            solver,
+            horizon,
+            final_bound,
+            replay_bounds,
+            replay_style,
+            mode,
+            replay_timeout,
+            final_timeout,
+        )
+        cases.append(case)
+        summary = ", ".join(f"K={s['K']}:{s['result']}" for s in case.get("stages", []))
+        print(f"action-canonical {replay_style} mode={mode}: {case['result']} [{summary}]", flush=True)
+
+    base_case = next((case for case in cases if case.get("mode") == "base"), None)
+    history_mismatch = False
+    equivalence_mismatch = False
+    base_query_mismatch = False
+    if base_case is not None:
+        base_first_signature = (
+            base_case.get("base_variables_at_first_query"),
+            base_case.get("base_clauses_at_first_query"),
+            tuple(base_case.get("first_query_assumptions", ())),
+        )
+        for case in cases:
+            signature = (
+                case.get("base_variables_at_first_query"),
+                case.get("base_clauses_at_first_query"),
+                tuple(case.get("first_query_assumptions", ())),
+            )
+            if signature != base_first_signature:
+                base_query_mismatch = True
+    if replay_style == "late-append" and base_case is not None:
+        base_stages = base_case.get("stages", [])
+        base_history = [stage for stage in base_stages if stage["stage"] == "replay"]
+        base_final_query = (
+            base_case.get("pre_canonical_variables"),
+            base_case.get("pre_canonical_clauses"),
+            tuple(base_case.get("pre_canonical_assumptions", ())),
+        )
+        for case in cases:
+            replay = [stage for stage in case.get("stages", []) if stage["stage"] == "replay"]
+            if len(replay) != len(base_history):
+                history_mismatch = True
+            query_signature = (
+                case.get("pre_canonical_variables"),
+                case.get("pre_canonical_clauses"),
+                tuple(case.get("pre_canonical_assumptions", ())),
+            )
+            if query_signature != base_final_query:
+                history_mismatch = True
+            for reference, candidate in zip(base_history, replay, strict=False):
+                compare_keys = ("K", "result", "stats", "variables_before_solve", "clauses_before_solve", "assumptions")
+                if any(reference.get(key) != candidate.get(key) for key in compare_keys):
+                    history_mismatch = True
+        if history_mismatch:
+            print("HISTORY_MISMATCH: late-append histories differ before canonical clauses", flush=True)
+    if base_query_mismatch:
+        print("BASE_QUERY_MISMATCH: base formula differs before canonical clauses", flush=True)
+
+    if base_case is not None:
+        base_by_bound = {
+            stage["K"]: stage["result"]
+            for stage in base_case.get("stages", [])
+            if stage["result"] in {"SAT", "UNSAT"}
+        }
+        for case in cases:
+            for stage in case.get("stages", []):
+                base_result = base_by_bound.get(stage["K"])
+                if base_result is not None and stage["result"] in {"SAT", "UNSAT"}:
+                    if stage["result"] != base_result:
+                        equivalence_mismatch = True
+        if equivalence_mismatch:
+            print("CANONICAL_EQUIVALENCE_MISMATCH: canonical query result differs from BASE", flush=True)
+
+    for case in cases:
+        case["history_mismatch"] = history_mismatch
+        case["base_query_mismatch"] = base_query_mismatch
+        case["canonical_equivalence_mismatch"] = equivalence_mismatch
+    return cases
+
+
+def _write_replay_outputs(out_dir, stem, cases, metadata):
+    out_dir.mkdir(parents=True, exist_ok=True)
+    json_path = out_dir / f"{stem}.json"
+    json_path.write_text(
+        json.dumps({**metadata, "cases": cases}, indent=2, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    csv_path = out_dir / f"{stem}.csv"
+    fields = (
+        "mode",
+        "replay_style",
+        "stage",
+        "K",
+        "result",
+        "solve_time",
+        "variables_before_solve",
+        "clauses_before_solve",
+        "canonical_variables",
+        "canonical_clauses",
+        "decisions",
+        "conflicts",
+        "propagations",
+        "restarts",
+        "decisions_per_second",
+        "conflicts_per_decision",
+        "propagations_per_decision",
+        "actual_k",
+        "containment_time",
+        "assumption_build_time",
+        "assumptions",
+        "history_mismatch",
+        "base_query_mismatch",
+        "canonical_equivalence_mismatch",
+    )
+    with csv_path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
+        for case in cases:
+            for stage in case.get("stages", []):
+                writer.writerow(
+                    {
+                        **case,
+                        **stage,
+                        **(stage.get("stats") or {}),
+                        "assumptions": json.dumps(stage.get("assumptions")),
+                        "stage": "final" if stage.get("stage") == "final" else "replay",
+                    }
+                )
+    return json_path, csv_path
+
+
 def fixed_prefix_experiment(path, firefighters, solver, horizon, bound, schedule, max_prefix, timeout):
     cases = []
     for prefix_length in range(max_prefix + 1):
@@ -1092,6 +1605,12 @@ def main(argv=None):
         nargs="+",
         default=["base", "indicator-only", "prefix", "canonical"],
     )
+    action_canonical.add_argument("--replay-bounds", type=nonnegative_int, nargs="+")
+    action_canonical.add_argument(
+        "--replay-style", choices=["integrated", "late-append"]
+    )
+    action_canonical.add_argument("--replay-query-time", type=positive_float, default=90.0)
+    action_canonical.add_argument("--final-query-time", type=positive_float, default=120.0)
     for command in (fixed, heatmap):
         command.add_argument("--per-query-time", type=positive_float, default=30.0)
         command.add_argument("--solver", default="cadical300")
@@ -1119,17 +1638,49 @@ def main(argv=None):
     if args.experiment == "action-canonical":
         if len(set(args.modes)) != len(args.modes):
             parser.error("--modes must not contain duplicates")
-        metadata.update(T=args.T, K=args.K, modes=args.modes)
-        cases = action_canonical_experiment(
-            args.instance,
-            args.firefighters,
-            args.solver,
-            args.T,
-            args.K,
-            args.modes,
-            args.per_query_time,
-        )
-        stem = "action_canonical"
+        if args.replay_bounds is not None:
+            if args.replay_style is None:
+                parser.error("--replay-style is required when --replay-bounds is provided")
+            if any(bound <= args.K or bound > instance.n for bound in args.replay_bounds):
+                parser.error("Every replay bound must be greater than --K and at most n")
+            if any(left <= right for left, right in zip(args.replay_bounds, args.replay_bounds[1:])):
+                parser.error("--replay-bounds must be strictly descending")
+            metadata.update(
+                T=args.T,
+                K=args.K,
+                modes=args.modes,
+                replay_bounds=args.replay_bounds,
+                replay_style=args.replay_style,
+                replay_query_time=args.replay_query_time,
+                final_query_time=args.final_query_time,
+            )
+            cases = action_canonical_replay_experiment(
+                args.instance,
+                args.firefighters,
+                args.solver,
+                args.T,
+                args.K,
+                args.replay_bounds,
+                args.replay_style,
+                args.modes,
+                args.replay_query_time,
+                args.final_query_time,
+            )
+            stem = f"action_canonical_{args.replay_style.replace('-', '_')}_replay"
+        else:
+            if args.replay_style is not None:
+                parser.error("--replay-style requires --replay-bounds")
+            metadata.update(T=args.T, K=args.K, modes=args.modes)
+            cases = action_canonical_experiment(
+                args.instance,
+                args.firefighters,
+                args.solver,
+                args.T,
+                args.K,
+                args.modes,
+                args.per_query_time,
+            )
+            stem = "action_canonical"
     elif args.experiment == "canonical-actions":
         if len(set(args.modes)) != len(args.modes):
             parser.error("--modes must not contain duplicates")
@@ -1248,7 +1799,10 @@ def main(argv=None):
         stem = "horizon_heatmap"
     if args.out_dir is None:
         args.out_dir = Path("diagnostics")
-    json_path, csv_path = _write_outputs(args.out_dir, stem, cases, metadata)
+    if args.experiment == "action-canonical" and args.replay_bounds is not None:
+        json_path, csv_path = _write_replay_outputs(args.out_dir, stem, cases, metadata)
+    else:
+        json_path, csv_path = _write_outputs(args.out_dir, stem, cases, metadata)
     print(f"JSON: {json_path}\nCSV: {csv_path}", flush=True)
     return int(any(case["result"] == "ERROR" for case in cases))
 

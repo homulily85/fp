@@ -188,3 +188,35 @@ The output separates the base formula from indicator, prefix, and
 full-capacity overhead. With $T=9$, `indicator-only` should add 9 variables and
 9,009 clauses; `prefix` adds eight more clauses. For $D=1$, `canonical` has the
 same counts as `prefix`.
+
+### Incremental replay styles
+
+Replay the same solver through earlier bounds using separate hard solve
+budgets for replay and final stages:
+
+```bash
+python -m ffp_sat.diagnose action-canonical \
+  dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --T 9 --K 989 \
+  --modes base indicator-only prefix \
+  --replay-bounds 991 990 --replay-style late-append \
+  --replay-query-time 90 --final-query-time 120 --solver cadical300
+```
+
+`integrated` adds the selected action clauses after building the first base
+query and keeps them active for every bound. `late-append` solves all replay
+bounds with BASE, creates the final objective assumptions, records the exact
+pre-canonical formula and assumptions, then appends the action clauses before
+the final solve. In late-append mode, the JSON reports `history_mismatch` if
+earlier results, CDCL statistic deltas, formula sizes, or final pre-append
+assumptions differ between modes. It separately reports
+`canonical_equivalence_mismatch` if a completed SAT/UNSAT result differs from
+BASE.
+
+Each solve stage gets its own parent-enforced wall-clock timeout. A replay
+stage timeout ends that mode with `REPLAY_TIMEOUT`; a final-stage timeout is
+`TIMEOUT`. An interrupted solve is never recorded as UNSAT. SAT models from
+every completed stage are checked by the simulator. Replay CSV output has one
+row per stage, while JSON groups stage details under each mode. Output files
+are named `action_canonical_integrated_replay.*` and
+`action_canonical_late_append_replay.*`.

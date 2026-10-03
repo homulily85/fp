@@ -1,3 +1,5 @@
+import csv
+import json
 import random
 import tempfile
 import unittest
@@ -7,7 +9,12 @@ from pathlib import Path
 from pysat.solvers import Solver
 
 from ffp_sat.action_canonical import ActionCanonicalEncoding
-from ffp_sat.diagnose import run_action_canonical_case
+from ffp_sat.diagnose import (
+    _stage_timeout_result,
+    _write_replay_outputs,
+    run_action_canonical_case,
+    run_action_canonical_replay_case,
+)
 from ffp_sat.encoder import Encoder
 from ffp_sat.preprocess import preprocess
 from ffp_sat.simulator import simulate
@@ -220,6 +227,92 @@ class ActionCanonicalTests(unittest.TestCase):
             self.assertNotEqual(base["worker_pid"], canonical["worker_pid"])
             self.assertEqual(base["base_variables"], canonical["base_variables"])
             self.assertEqual(base["base_clauses"], canonical["base_clauses"])
+
+    def test_late_append_replay_keeps_base_history_identical(self):
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "path.in"
+            path.write_text("0\n3\n2\nx\n1\n0\n0 1\n1 2\n")
+            cases = [
+                run_action_canonical_replay_case(
+                    path,
+                    1,
+                    "cadical300",
+                    1,
+                    1,
+                    [2, 1],
+                    "late-append",
+                    mode,
+                    5,
+                    5,
+                )
+                for mode in ("base", "indicator-only", "prefix")
+            ]
+            base = cases[0]
+            for case in cases:
+                self.assertEqual([stage["result"] for stage in case["stages"]], ["SAT", "SAT", "SAT"])
+                self.assertEqual(case["pre_canonical_variables"], base["pre_canonical_variables"])
+                self.assertEqual(case["pre_canonical_clauses"], base["pre_canonical_clauses"])
+                self.assertEqual(case["pre_canonical_assumptions"], base["pre_canonical_assumptions"])
+                self.assertEqual(
+                    [stage["stats"] for stage in case["stages"][:2]],
+                    [stage["stats"] for stage in base["stages"][:2]],
+                )
+            self.assertEqual(cases[1]["canonical_variables"], 1)
+            self.assertEqual(cases[1]["canonical_clauses"], 4)
+            self.assertEqual(cases[2]["canonical_clauses"], 4)
+            json_path, csv_path = _write_replay_outputs(
+                Path(root) / "results",
+                "late_append",
+                cases,
+                {"replay_style": "late-append"},
+            )
+            self.assertEqual(len(json.loads(json_path.read_text())["cases"]), 3)
+            with csv_path.open(newline="") as stream:
+                rows = list(csv.DictReader(stream))
+            self.assertEqual(len(rows), 9)
+            self.assertEqual(rows[0]["stage"], "replay")
+            self.assertEqual(rows[-1]["stage"], "final")
+
+    def test_integrated_replay_appends_canonical_clauses_before_first_query(self):
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "path.in"
+            path.write_text("0\n3\n2\nx\n1\n0\n0 1\n1 2\n")
+            case = run_action_canonical_replay_case(
+                path,
+                1,
+                "cadical300",
+                1,
+                1,
+                [2, 1],
+                "integrated",
+                "prefix",
+                5,
+                5,
+            )
+            self.assertGreater(case["stages"][0]["canonical_variables"], 0)
+            self.assertGreater(case["stages"][0]["canonical_clauses"], 0)
+            self.assertEqual([stage["result"] for stage in case["stages"]], ["SAT", "SAT", "SAT"])
+
+    def test_replay_and_final_stage_timeouts_have_distinct_results(self):
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "path.in"
+            path.write_text("0\n3\n2\nx\n1\n0\n0 1\n1 2\n")
+            replay_timeout = run_action_canonical_replay_case(
+                path,
+                1,
+                "cadical300",
+                1,
+                1,
+                [2],
+                "late-append",
+                "base",
+                1e-12,
+                5,
+            )
+            self.assertEqual(replay_timeout["result"], "REPLAY_TIMEOUT")
+            self.assertEqual(replay_timeout["failed_bound"], 2)
+            self.assertIn("variables_before_solve", replay_timeout["stages"][-1])
+            self.assertEqual(_stage_timeout_result("final"), "TIMEOUT")
 
 
 if __name__ == "__main__":

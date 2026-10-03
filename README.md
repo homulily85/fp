@@ -75,6 +75,11 @@ python -m ffp_sat.diagnose canonical-actions dataset/1000_ep0.0075_0_gilbert_1.i
 python -m ffp_sat.diagnose action-canonical dataset/1000_ep0.0075_0_gilbert_1.in \
   --firefighters 1 --T 9 --K 989 \
   --modes base indicator-only prefix canonical --per-query-time 60
+
+python -m ffp_sat.diagnose action-canonical dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --T 9 --K 989 \
+  --modes base indicator-only prefix --replay-bounds 991 990 \
+  --replay-style late-append --replay-query-time 90 --final-query-time 120
 ```
 
 Xem hướng dẫn [diagnostic](docs/DIAGNOSTICS.md) để biết cách đọc timeout,
