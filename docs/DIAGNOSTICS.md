@@ -219,4 +219,6 @@ stage timeout ends that mode with `REPLAY_TIMEOUT`; a final-stage timeout is
 every completed stage are checked by the simulator. Replay CSV output has one
 row per stage, while JSON groups stage details under each mode. Output files
 are named `action_canonical_integrated_replay.*` and
-`action_canonical_late_append_replay.*`.
+`action_canonical_late_append_replay.*`. Pass `--output-stem` to keep runs
+with different budgets separate, for example
+`--output-stem action_canonical_late_append_600s`.

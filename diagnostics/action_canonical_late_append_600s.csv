@@ -1,0 +1,7 @@
+mode,replay_style,stage,K,result,solve_time,variables_before_solve,clauses_before_solve,canonical_variables,canonical_clauses,decisions,conflicts,propagations,restarts,decisions_per_second,conflicts_per_decision,propagations_per_decision,actual_k,containment_time,assumption_build_time,assumptions,history_mismatch,base_query_mismatch,canonical_equivalence_mismatch
+base,late-append,replay,991,SAT,29.19854789400415,55947,214806,0,0,483968,127951,259210386,1633,16575.070847936982,0.26437904985453586,535.5940599378471,991,6,1.7198908608406782e-07,"[46983, 55947]",False,False,False
+base,late-append,replay,990,SAT,20.15239814000961,56938,218769,0,0,285138,77017,189453466,1430,14149.085285978974,0.2701043003738541,664.4272808254249,990,6,0.005342744989320636,"[46983, 56938]",False,False,False
+base,late-append,final,989,TIMEOUT,600.0,57928,222728,0,0,,,,,,,,,,0.005689650992280804,"[46983, 57928]",False,False,False
+prefix,late-append,replay,991,SAT,28.092587027000263,55947,214806,0,0,483968,127951,259210386,1633,17227.605258812586,0.26437904985453586,535.5940599378471,991,6,1.309963408857584e-07,"[46983, 55947]",False,False,False
+prefix,late-append,replay,990,SAT,19.600575058997492,56938,218769,0,0,285138,77017,189453466,1430,14547.430324964349,0.2701043003738541,664.4272808254249,990,6,0.004937411998980679,"[46983, 56938]",False,False,False
+prefix,late-append,final,989,TIMEOUT,600.0,57937,231745,9,9017,,,,,,,,,,0.005721558001823723,"[46983, 57928]",False,False,False

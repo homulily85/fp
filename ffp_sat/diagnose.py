@@ -1611,6 +1611,10 @@ def main(argv=None):
     )
     action_canonical.add_argument("--replay-query-time", type=positive_float, default=90.0)
     action_canonical.add_argument("--final-query-time", type=positive_float, default=120.0)
+    action_canonical.add_argument(
+        "--output-stem",
+        help="Output filename stem; useful for keeping replay runs with different budgets separate",
+    )
     for command in (fixed, heatmap):
         command.add_argument("--per-query-time", type=positive_float, default=30.0)
         command.add_argument("--solver", default="cadical300")
@@ -1666,10 +1670,12 @@ def main(argv=None):
                 args.replay_query_time,
                 args.final_query_time,
             )
-            stem = f"action_canonical_{args.replay_style.replace('-', '_')}_replay"
+            stem = args.output_stem or f"action_canonical_{args.replay_style.replace('-', '_')}_replay"
         else:
             if args.replay_style is not None:
                 parser.error("--replay-style requires --replay-bounds")
+            if args.output_stem is not None:
+                parser.error("--output-stem requires --replay-bounds")
             metadata.update(T=args.T, K=args.K, modes=args.modes)
             cases = action_canonical_experiment(
                 args.instance,
