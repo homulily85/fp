@@ -222,3 +222,40 @@ are named `action_canonical_integrated_replay.*` and
 `action_canonical_late_append_replay.*`. Pass `--output-stem` to keep runs
 with different budgets separate, for example
 `--output-stem action_canonical_late_append_600s`.
+
+### Prefix core mining
+
+Check PySAT/CaDiCaL assumption-core support and probe known depth-3/depth-5
+prefixes first:
+
+```bash
+python -m ffp_sat.diagnose prefix-core-mining \
+  dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --T 9 --K 989 \
+  --schedule /tmp/ffp-diagnostic-incumbent.json \
+  --sanity-depths 3 5 --probe-time 10 --solver cadical300
+```
+
+For full mining and master comparison, pass replay bounds. Query assumptions
+are asserted as unit clauses inside each fresh probe worker, so `get_core()`
+contains only prefix assumptions. Cores are returned as semantic
+`(round, vertex, polarity)` triples; master clauses are guarded by the final
+query assumptions before they are added. A timeout never contributes a core.
+
+```bash
+python -m ffp_sat.diagnose prefix-core-mining \
+  dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --T 9 --K 989 \
+  --schedule /tmp/ffp-diagnostic-incumbent.json \
+  --pool-size 128 --prefix-depth 5 --probe-time 5 --seed 0 --jobs 1 \
+  --replay-bounds 991 990 --replay-query-time 90 \
+  --final-query-time 600 --solver cadical300
+```
+
+The JSON report contains sanity probes, every mined prefix/core, core size
+and action-frequency summaries, and separate BASE/MINED replay stages. The
+CSV has one row per probe or master stage. In late-append comparison, MINED
+checks that the replay history and pre-append final query match BASE exactly;
+it stops before the final solve if they differ. A collection of UNSAT prefix
+cores only excludes those prefixes and does not prove the rest of the search
+space UNSAT.

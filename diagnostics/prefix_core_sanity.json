@@ -1,0 +1,189 @@
+{
+  "query": {
+    "T": 9,
+    "K": 989
+  },
+  "config": {
+    "instance": "dataset/1000_ep0.0075_0_gilbert_1.in",
+    "firefighters": 1,
+    "solver": "cadical300",
+    "schedule": "/tmp/ffp-diagnostic-incumbent.json",
+    "pool_size": 128,
+    "prefix_depth": 5,
+    "probe_time": 10.0,
+    "sanity_time": 10.0,
+    "seed": 0,
+    "jobs": 1,
+    "replay_bounds": [
+      991,
+      990
+    ],
+    "replay_query_time": 90.0,
+    "final_query_time": 600.0
+  },
+  "sanity_probes": [
+    {
+      "experiment": "prefix_core_probe",
+      "T": 9,
+      "K": 989,
+      "prefix": [
+        [
+          1,
+          568
+        ],
+        [
+          2,
+          546
+        ],
+        [
+          3,
+          599
+        ]
+      ],
+      "result": "UNSAT",
+      "query_assumptions": [
+        46983,
+        57928
+      ],
+      "prefix_literals": [
+        3707,
+        8639,
+        13796
+      ],
+      "variables": 57928,
+      "clauses": 222730,
+      "encoding_time": 0.1768953849968966,
+      "solve_time": 6.03040745400358,
+      "stats": {
+        "decisions": 73309,
+        "conflicts": 19834,
+        "propagations": 48534518,
+        "restarts": 249
+      },
+      "raw_core": [
+        3707,
+        8639,
+        13796
+      ],
+      "core": [
+        [
+          1,
+          568,
+          true
+        ],
+        [
+          2,
+          546,
+          true
+        ],
+        [
+          3,
+          599,
+          true
+        ]
+      ],
+      "wall_time": 6.268426324008033,
+      "depth": 3,
+      "source_k": 990,
+      "source": "known_incumbent"
+    },
+    {
+      "experiment": "prefix_core_probe",
+      "T": 9,
+      "K": 989,
+      "prefix": [
+        [
+          1,
+          568
+        ],
+        [
+          2,
+          546
+        ],
+        [
+          3,
+          599
+        ],
+        [
+          4,
+          67
+        ],
+        [
+          5,
+          732
+        ]
+      ],
+      "result": "UNSAT",
+      "query_assumptions": [
+        46983,
+        57928
+      ],
+      "prefix_literals": [
+        3707,
+        8639,
+        13796,
+        17198,
+        24191
+      ],
+      "variables": 57928,
+      "clauses": 222730,
+      "encoding_time": 0.1658915709995199,
+      "solve_time": 0.007330931010073982,
+      "stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "raw_core": [
+        3707,
+        8639,
+        13796,
+        17198,
+        24191
+      ],
+      "core": [
+        [
+          1,
+          568,
+          true
+        ],
+        [
+          2,
+          546,
+          true
+        ],
+        [
+          3,
+          599,
+          true
+        ],
+        [
+          4,
+          67,
+          true
+        ],
+        [
+          5,
+          732,
+          true
+        ]
+      ],
+      "wall_time": 0.23166317499999423,
+      "depth": 5,
+      "source_k": 990,
+      "source": "known_incumbent"
+    }
+  ],
+  "mining": {},
+  "master_comparison": {},
+  "result": "SANITY_PASSED",
+  "assumption_core_support": {
+    "solver": "cadical300",
+    "supported": true,
+    "test_core": [
+      1,
+      2
+    ]
+  }
+}

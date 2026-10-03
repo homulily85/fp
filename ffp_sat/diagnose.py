@@ -16,6 +16,7 @@ from .canonical import CanonicalActionEncoding
 from .encoder import Encoder
 from .guidance import PhaseMode, build_consensus_pool, build_phase_literals, validate_phase_literals
 from .instance import read_instance
+from .prefix_core_mining import run_prefix_core_mining
 from .preprocess import preprocess
 from .simulator import simulate
 
@@ -1615,6 +1616,25 @@ def main(argv=None):
         "--output-stem",
         help="Output filename stem; useful for keeping replay runs with different budgets separate",
     )
+    core_mining = subparsers.add_parser(
+        "prefix-core-mining",
+        help="Mine semantic UNSAT cores from action prefixes and compare a guarded-clause replay",
+    )
+    core_mining.add_argument("instance", type=Path)
+    core_mining.add_argument("--firefighters", type=positive_int, required=True)
+    core_mining.add_argument("--T", type=nonnegative_int, required=True)
+    core_mining.add_argument("--K", type=nonnegative_int, required=True)
+    core_mining.add_argument("--schedule", type=Path, required=True)
+    core_mining.add_argument("--sanity-depths", type=positive_int, nargs="+", default=[3, 5])
+    core_mining.add_argument("--sanity-time", type=positive_float, default=10.0)
+    core_mining.add_argument("--pool-size", type=positive_int, default=128)
+    core_mining.add_argument("--prefix-depth", type=positive_int, default=5)
+    core_mining.add_argument("--probe-time", type=positive_float, default=5.0)
+    core_mining.add_argument("--seed", type=int, default=0)
+    core_mining.add_argument("--jobs", type=positive_int, default=1)
+    core_mining.add_argument("--replay-bounds", type=nonnegative_int, nargs="+")
+    core_mining.add_argument("--replay-query-time", type=positive_float, default=90.0)
+    core_mining.add_argument("--final-query-time", type=positive_float, default=600.0)
     for command in (fixed, heatmap):
         command.add_argument("--per-query-time", type=positive_float, default=30.0)
         command.add_argument("--solver", default="cadical300")
@@ -1623,6 +1643,8 @@ def main(argv=None):
         command.add_argument("--per-query-time", type=positive_float, default=60.0)
         command.add_argument("--solver", default="cadical300")
         command.add_argument("--out-dir", type=Path)
+    core_mining.add_argument("--solver", default="cadical300")
+    core_mining.add_argument("--out-dir", type=Path)
     args = parser.parse_args(argv)
 
     try:
@@ -1635,10 +1657,85 @@ def main(argv=None):
         "m": instance.m,
         "firefighters": args.firefighters,
         "solver": args.solver,
-        "per_query_time": args.per_query_time,
     }
+    if hasattr(args, "per_query_time"):
+        metadata["per_query_time"] = args.per_query_time
     if args.K > instance.n:
         parser.error("--K must not exceed the number of vertices")
+    if args.experiment == "prefix-core-mining":
+        if any(bound <= args.K or bound > instance.n for bound in (args.replay_bounds or [])):
+            parser.error("Every replay bound must be greater than --K and at most n")
+        if args.replay_bounds is not None and any(
+            left <= right for left, right in zip(args.replay_bounds, args.replay_bounds[1:])
+        ):
+            parser.error("--replay-bounds must be strictly descending")
+        if args.jobs != 1:
+            parser.error("This initial core-mining experiment requires --jobs 1")
+        try:
+            probe = Solver(name=args.solver, bootstrap_with=[[-1, -2]])
+            if not probe.solve(assumptions=[1, 2]):
+                core = probe.get_core()
+                if core is None or not set(core).issubset({1, 2}):
+                    parser.error(
+                        f"SAT backend {args.solver!r} does not return valid assumption cores; "
+                        "prefix-core mining stopped"
+                    )
+            else:
+                parser.error(f"SAT backend {args.solver!r} failed the assumption-core sanity check")
+            probe.delete()
+        except Exception as exc:
+            parser.error(f"Cannot verify assumption-core support for {args.solver!r}: {exc}")
+        try:
+            report = run_prefix_core_mining(
+                args.instance,
+                args.firefighters,
+                args.solver,
+                args.T,
+                args.K,
+                args.schedule,
+                args.sanity_depths,
+                args.pool_size,
+                args.prefix_depth,
+                args.probe_time,
+                args.sanity_time,
+                args.seed,
+                args.replay_bounds or (991, 990),
+                args.replay_query_time,
+                args.final_query_time,
+                args.jobs,
+                sanity_only=args.replay_bounds is None,
+            )
+            report["assumption_core_support"] = {
+                "solver": args.solver,
+                "supported": True,
+                "test_core": list(core),
+            }
+        except (OSError, ValueError, TypeError) as exc:
+            parser.error(f"Prefix-core diagnostic failed: {exc}")
+        out_dir = args.out_dir or Path("diagnostics")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        stem = "prefix_core_mining" if args.replay_bounds is not None else "prefix_core_sanity"
+        json_path = out_dir / f"{stem}.json"
+        json_path.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+        csv_path = out_dir / f"{stem}.csv"
+        fields = (
+            "record_type", "index", "mode", "stage", "K", "result", "prefix",
+            "source_k", "actual_depth", "solve_time", "core", "actual_k",
+            "containment_time", "variables_before_solve", "clauses_before_solve",
+            "decisions", "conflicts", "propagations", "restarts", "stats",
+        )
+        with csv_path.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
+            writer.writeheader()
+            for index, probe_row in enumerate(report.get("sanity_probes", [])):
+                writer.writerow({"record_type": "sanity", "index": index, **probe_row, "stats": json.dumps(probe_row.get("stats"))})
+            for index, probe_row in enumerate(report.get("probes", [])):
+                writer.writerow({"record_type": "probe", "index": index, **probe_row, "stats": json.dumps(probe_row.get("stats"))})
+            for mode, master in report.get("master_comparison", {}).items():
+                for stage in master.get("stages", []):
+                    writer.writerow({"record_type": "master", "mode": mode, **stage, "stats": json.dumps(stage.get("stats"))})
+        print(f"Result: {report['result']}\nJSON: {json_path}\nCSV: {csv_path}", flush=True)
+        return int(report["result"] in {"ERROR", "SANITY_FAILED", "HISTORY_MISMATCH"})
     if args.experiment == "action-canonical":
         if len(set(args.modes)) != len(args.modes):
             parser.error("--modes must not contain duplicates")
