@@ -11,6 +11,7 @@ from pathlib import Path
 
 from pysat.solvers import Solver
 
+from .canonical import CanonicalActionEncoding
 from .encoder import Encoder
 from .guidance import PhaseMode, build_consensus_pool, build_phase_literals, validate_phase_literals
 from .instance import read_instance
@@ -541,6 +542,196 @@ def phase_guidance_experiment(
     return cases
 
 
+def _canonical_worker(connection, path, firefighters, solver_name, horizon, bound, mode, started):
+    solver = encoder = None
+    metrics = {
+        "worker_pid": os.getpid(),
+        "experiment": "canonical_actions",
+        "mode": mode,
+        "T": horizon,
+        "K": bound,
+        "result": "ERROR",
+        "encoding_time": 0.0,
+        "canonical_encoding_time": 0.0,
+        "solve_time": 0.0,
+        "base_variables": 0,
+        "base_clauses": 0,
+        "base_semantic_variables": 0,
+        "base_auxiliary_variables": 0,
+        "active_variables": 0,
+        "threat_witness_variables": 0,
+        "active_state_clauses": 0,
+        "stop_clauses": 0,
+        "nonempty_clauses": 0,
+        "full_capacity_clauses": 0,
+        "full_capacity_auxiliary_variables": 0,
+        "total_variables": 0,
+        "total_clauses": 0,
+        "assumption_count": 0,
+    }
+    try:
+        instance = read_instance(path)
+        distance, _ = preprocess(instance, firefighters)
+        solver = Solver(name=solver_name)
+        encode_started = time.monotonic()
+        encoder = Encoder(instance, firefighters, solver, distance)
+        encoder.ensure_horizon(horizon)
+        assumptions = encoder.assumptions(horizon, bound, instance.n)
+        metrics["encoding_time"] = time.monotonic() - encode_started
+        metrics.update(
+            base_variables=encoder.vars.top,
+            base_clauses=encoder.clauses,
+            base_semantic_variables=encoder.vars.semantic,
+            base_auxiliary_variables=encoder.vars.auxiliary,
+            assumption_count=len(assumptions),
+            assumptions=assumptions,
+        )
+
+        canonical = CanonicalActionEncoding(encoder)
+        canonical_started = time.monotonic()
+        canonical.apply_mode(mode, horizon, firefighters)
+        metrics["canonical_encoding_time"] = time.monotonic() - canonical_started
+        canonical_stats = canonical.stats()
+        metrics.update(
+            **canonical_stats,
+            total_variables=encoder.vars.top,
+            total_clauses=encoder.clauses + sum(canonical_stats[key] for key in (
+                "active_state_clauses",
+                "stop_clauses",
+                "nonempty_clauses",
+                "full_capacity_clauses",
+            )),
+        )
+        connection.send(("ENCODED", metrics))
+        connection.send(("SOLVE_STARTED", time.monotonic() - started))
+        solve_started = time.monotonic()
+        satisfiable = solver.solve(assumptions=assumptions)
+        metrics["solve_time"] = time.monotonic() - solve_started
+        try:
+            stats = solver.accum_stats()
+        except (AttributeError, NotImplementedError):
+            stats = {}
+        for key in ("decisions", "conflicts", "propagations", "restarts"):
+            if key in stats:
+                metrics[key] = stats[key]
+        if satisfiable:
+            model = set(solver.get_model())
+            schedule = [list(actions) for actions in encoder.decode(model, horizon)]
+            solution = simulate(instance, firefighters, schedule)
+            if solution.k > bound or solution.containment_time > horizon:
+                raise AssertionError("SAT model failed independent schedule validation")
+            metrics.update(
+                actual_k=solution.k,
+                containment_time=solution.containment_time,
+                schedule=[list(actions) for actions in solution.schedule],
+            )
+        metrics["result"] = "SAT" if satisfiable else "UNSAT"
+        connection.send(("RESULT", metrics))
+    except Exception as exc:
+        metrics.update(result="ERROR", error=f"{type(exc).__name__}: {exc}")
+        connection.send(("RESULT", metrics))
+    finally:
+        if encoder is not None:
+            encoder.close()
+        if solver is not None:
+            solver.delete()
+        connection.close()
+
+
+def run_canonical_case(path, firefighters, solver_name, horizon, bound, mode, timeout):
+    """Run one canonical-action ablation in a fresh spawned solver process."""
+    context = multiprocessing.get_context("spawn")
+    receiver, sender = context.Pipe(duplex=False)
+    started = time.monotonic()
+    process = context.Process(
+        target=_canonical_worker,
+        args=(sender, str(path), firefighters, solver_name, horizon, bound, mode, started),
+    )
+    latest = {}
+    solve_started = None
+    final_received = False
+    process.start()
+    sender.close()
+    try:
+        while process.is_alive() and time.monotonic() - started < timeout:
+            remaining = timeout - (time.monotonic() - started)
+            if not receiver.poll(min(0.05, max(0.0, remaining))):
+                continue
+            try:
+                kind, payload = receiver.recv()
+            except (EOFError, OSError):
+                break
+            if kind == "ENCODED":
+                latest = payload
+            elif kind == "RESULT":
+                latest = payload
+                final_received = True
+            elif kind == "SOLVE_STARTED":
+                solve_started = started + payload
+        timed_out = process.is_alive()
+        if timed_out:
+            process.terminate()
+            process.join(0.2)
+            if process.is_alive():
+                process.kill()
+                process.join(0.2)
+        else:
+            process.join(0.2)
+        while receiver.poll():
+            try:
+                kind, payload = receiver.recv()
+            except (EOFError, OSError):
+                break
+            if kind == "ENCODED":
+                latest = payload
+            elif kind == "RESULT":
+                latest = payload
+                final_received = True
+            elif kind == "SOLVE_STARTED":
+                solve_started = started + payload
+        if timed_out and not final_received:
+            latest["result"] = "TIMEOUT"
+            latest["solve_time"] = min(timeout, max(0.0, time.monotonic() - solve_started)) if solve_started else 0.0
+        elif not final_received:
+            latest.update(result="ERROR", error=f"Worker exited with code {process.exitcode}")
+        latest["wall_time"] = time.monotonic() - started
+        latest.setdefault("mode", mode)
+        latest.setdefault("experiment", "canonical_actions")
+        latest.setdefault("T", horizon)
+        latest.setdefault("K", bound)
+        return latest
+    finally:
+        if process.is_alive():
+            process.kill()
+            process.join(0.2)
+        receiver.close()
+        process.close()
+
+
+def canonical_actions_experiment(path, firefighters, solver, horizon, bound, modes, timeout):
+    cases = []
+    for mode in modes:
+        case = run_canonical_case(path, firefighters, solver, horizon, bound, mode, timeout)
+        cases.append(case)
+        print(
+            f"canonical mode={mode}: {case['result']} {case.get('solve_time', 0.0):.2f}s "
+            f"vars={case.get('total_variables', 0)} clauses={case.get('total_clauses', 0)}",
+            flush=True,
+        )
+    signatures = {
+        (
+            case.get("base_variables"),
+            case.get("base_clauses"),
+            tuple(case.get("assumptions", ())),
+        )
+        for case in cases
+        if case.get("base_variables") is not None
+    }
+    if len(signatures) > 1:
+        raise AssertionError(f"Canonical modes changed the base formula or query: {signatures}")
+    return cases
+
+
 def fixed_prefix_experiment(path, firefighters, solver, horizon, bound, schedule, max_prefix, timeout):
     cases = []
     for prefix_length in range(max_prefix + 1):
@@ -608,6 +799,21 @@ def _write_outputs(out_dir, stem, cases, metadata):
         "decisions_per_second",
         "conflicts_per_decision",
         "propagations_per_decision",
+        "mode",
+        "base_variables",
+        "base_clauses",
+        "base_semantic_variables",
+        "base_auxiliary_variables",
+        "active_variables",
+        "threat_witness_variables",
+        "active_state_clauses",
+        "stop_clauses",
+        "nonempty_clauses",
+        "full_capacity_clauses",
+        "full_capacity_auxiliary_variables",
+        "total_variables",
+        "total_clauses",
+        "canonical_encoding_time",
         "wall_time",
         "error",
     )
@@ -670,11 +876,24 @@ def main(argv=None):
         default=[],
         help="Optional preceding K bounds solved normally on the same solver before applying guidance",
     )
+    canonical = subparsers.add_parser(
+        "canonical-actions", help="Ablate exact active-state and canonical action constraints"
+    )
+    canonical.add_argument("instance", type=Path)
+    canonical.add_argument("--firefighters", type=positive_int, required=True)
+    canonical.add_argument("--T", type=nonnegative_int, required=True)
+    canonical.add_argument("--K", type=nonnegative_int, required=True)
+    canonical.add_argument(
+        "--modes",
+        choices=["base", "active-only", "stop-after-contained", "canonical"],
+        nargs="+",
+        default=["base", "active-only", "stop-after-contained", "canonical"],
+    )
     for command in (fixed, heatmap):
         command.add_argument("--per-query-time", type=positive_float, default=30.0)
         command.add_argument("--solver", default="cadical300")
         command.add_argument("--out-dir", type=Path)
-    for command in (phase,):
+    for command in (phase, canonical):
         command.add_argument("--per-query-time", type=positive_float, default=60.0)
         command.add_argument("--solver", default="cadical300")
         command.add_argument("--out-dir", type=Path)
@@ -694,7 +913,21 @@ def main(argv=None):
     }
     if args.K > instance.n:
         parser.error("--K must not exceed the number of vertices")
-    if args.experiment == "phase-guidance":
+    if args.experiment == "canonical-actions":
+        if len(set(args.modes)) != len(args.modes):
+            parser.error("--modes must not contain duplicates")
+        metadata.update(T=args.T, K=args.K, modes=args.modes)
+        cases = canonical_actions_experiment(
+            args.instance,
+            args.firefighters,
+            args.solver,
+            args.T,
+            args.K,
+            args.modes,
+            args.per_query_time,
+        )
+        stem = "canonical_actions"
+    elif args.experiment == "phase-guidance":
         if "action" in args.modes or "full" in args.modes:
             try:
                 schedule, schedule_meta = load_result_schedule(args.schedule)

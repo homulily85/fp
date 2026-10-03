@@ -128,3 +128,36 @@ immediately before its solve. The per-query wall-clock limit covers the whole
 replay case, including setup and earlier bounds. Replay output is written to
 `phase_guidance_replay.json` and `.csv`; direct output uses
 `phase_guidance.json` and `.csv`.
+
+## Canonical action ablation
+
+Compare the base query with active-state and action canonicalization clauses:
+
+```bash
+python -m ffp_sat.diagnose canonical-actions \
+  dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --T 9 --K 989 \
+  --modes base active-only stop-after-contained canonical \
+  --per-query-time 30 --solver cadical300
+```
+
+Every mode uses a fresh process and CaDiCaL instance. The base encoder first
+builds the complete query, including objective and containment assumptions.
+Optional active-state and canonical clauses are appended afterward, so base
+variable IDs, clauses, and assumptions remain identical.
+
+`active-only` defines `g[t]` as whether a burned vertex has an untouched
+neighbor. It uses one witness per non-isolated vertex and an OR over witnesses;
+it does not change action rules. `stop-after-contained` additionally forbids
+actions in rounds whose previous state was already contained. `canonical`
+also requires an action while fire is active and, for firefighter counts above
+one, requires full capacity in rounds that remain active after that round.
+These restrictions select canonical representatives that preserve existence
+for the objective; they do not describe every feasible schedule.
+
+The result reports the base and total formula sizes separately, plus active
+and witness variable counts, clauses by canonical rule, canonical encoding
+time, and SAT statistics when the solve completes. SAT schedules are checked
+with the simulator. With one firefighter, the existing at-most-one constraint
+and the active nonempty rule already imply exactly one action in each active
+round, so no additional full-capacity counter is built.
