@@ -1,0 +1,261 @@
+{
+  "instance": "dataset/1000_ep0.0075_0_gilbert_1.in",
+  "n": 1000,
+  "m": 3809,
+  "firefighters": 1,
+  "solver": "cadical300",
+  "per_query_time": 30.0,
+  "T": 9,
+  "K": 989,
+  "incumbent_k": 990,
+  "incumbent_containment_time": 6,
+  "schedule_input": "/tmp/ffp-diagnostic-incumbent.json",
+  "cases": [
+    {
+      "worker_pid": 5,
+      "T": 9,
+      "K": 989,
+      "saved_required": 11,
+      "encoding_time": 0.17521380000107456,
+      "solve_time": 29.778150664998975,
+      "variables": 57928,
+      "clauses": 222728,
+      "semantic_variables": 29000,
+      "auxiliary_variables": 28927,
+      "assumption_count": 2,
+      "containment_clauses": 7618,
+      "containment_activation_variables": 1,
+      "fixed_actions": [],
+      "result": "TIMEOUT",
+      "wall_time": 30.003302672994323,
+      "experiment": "fixed_prefix",
+      "prefix_length": 0
+    },
+    {
+      "worker_pid": 6,
+      "T": 9,
+      "K": 989,
+      "saved_required": 11,
+      "encoding_time": 0.1653712560000713,
+      "solve_time": 29.793042675002653,
+      "variables": 57928,
+      "clauses": 222728,
+      "semantic_variables": 29000,
+      "auxiliary_variables": 28927,
+      "assumption_count": 3,
+      "containment_clauses": 7618,
+      "containment_activation_variables": 1,
+      "fixed_actions": [
+        [
+          1,
+          568
+        ]
+      ],
+      "result": "TIMEOUT",
+      "wall_time": 30.003223385996534,
+      "experiment": "fixed_prefix",
+      "prefix_length": 1
+    },
+    {
+      "worker_pid": 7,
+      "T": 9,
+      "K": 989,
+      "saved_required": 11,
+      "encoding_time": 0.16575171799922828,
+      "solve_time": 29.79301531699457,
+      "variables": 57928,
+      "clauses": 222728,
+      "semantic_variables": 29000,
+      "auxiliary_variables": 28927,
+      "assumption_count": 4,
+      "containment_clauses": 7618,
+      "containment_activation_variables": 1,
+      "fixed_actions": [
+        [
+          1,
+          568
+        ],
+        [
+          2,
+          546
+        ]
+      ],
+      "result": "TIMEOUT",
+      "wall_time": 30.003215193995857,
+      "experiment": "fixed_prefix",
+      "prefix_length": 2
+    },
+    {
+      "worker_pid": 8,
+      "T": 9,
+      "K": 989,
+      "saved_required": 11,
+      "encoding_time": 0.16513835399382515,
+      "solve_time": 5.855029530997854,
+      "variables": 57928,
+      "clauses": 222728,
+      "semantic_variables": 29000,
+      "auxiliary_variables": 28927,
+      "assumption_count": 5,
+      "containment_clauses": 7618,
+      "containment_activation_variables": 1,
+      "fixed_actions": [
+        [
+          1,
+          568
+        ],
+        [
+          2,
+          546
+        ],
+        [
+          3,
+          599
+        ]
+      ],
+      "decisions": 79056,
+      "conflicts": 17333,
+      "propagations": 45901550,
+      "restarts": 378,
+      "result": "UNSAT",
+      "wall_time": 6.071229100001801,
+      "experiment": "fixed_prefix",
+      "prefix_length": 3
+    },
+    {
+      "worker_pid": 9,
+      "T": 9,
+      "K": 989,
+      "saved_required": 11,
+      "encoding_time": 0.16962260299624177,
+      "solve_time": 0.38083634799841093,
+      "variables": 57928,
+      "clauses": 222728,
+      "semantic_variables": 29000,
+      "auxiliary_variables": 28927,
+      "assumption_count": 6,
+      "containment_clauses": 7618,
+      "containment_activation_variables": 1,
+      "fixed_actions": [
+        [
+          1,
+          568
+        ],
+        [
+          2,
+          546
+        ],
+        [
+          3,
+          599
+        ],
+        [
+          4,
+          67
+        ]
+      ],
+      "decisions": 1541,
+      "conflicts": 403,
+      "propagations": 849824,
+      "restarts": 23,
+      "result": "UNSAT",
+      "wall_time": 0.604755489002855,
+      "experiment": "fixed_prefix",
+      "prefix_length": 4
+    },
+    {
+      "worker_pid": 10,
+      "T": 9,
+      "K": 989,
+      "saved_required": 11,
+      "encoding_time": 0.1690791930013802,
+      "solve_time": 0.008463354999548756,
+      "variables": 57928,
+      "clauses": 222728,
+      "semantic_variables": 29000,
+      "auxiliary_variables": 28927,
+      "assumption_count": 7,
+      "containment_clauses": 7618,
+      "containment_activation_variables": 1,
+      "fixed_actions": [
+        [
+          1,
+          568
+        ],
+        [
+          2,
+          546
+        ],
+        [
+          3,
+          599
+        ],
+        [
+          4,
+          67
+        ],
+        [
+          5,
+          732
+        ]
+      ],
+      "decisions": 0,
+      "conflicts": 0,
+      "propagations": 13844,
+      "restarts": 0,
+      "result": "UNSAT",
+      "wall_time": 0.23074647699831985,
+      "experiment": "fixed_prefix",
+      "prefix_length": 5
+    },
+    {
+      "worker_pid": 11,
+      "T": 9,
+      "K": 989,
+      "saved_required": 11,
+      "encoding_time": 0.1735417910022079,
+      "solve_time": 0.007264297004439868,
+      "variables": 57928,
+      "clauses": 222728,
+      "semantic_variables": 29000,
+      "auxiliary_variables": 28927,
+      "assumption_count": 8,
+      "containment_clauses": 7618,
+      "containment_activation_variables": 1,
+      "fixed_actions": [
+        [
+          1,
+          568
+        ],
+        [
+          2,
+          546
+        ],
+        [
+          3,
+          599
+        ],
+        [
+          4,
+          67
+        ],
+        [
+          5,
+          732
+        ],
+        [
+          6,
+          269
+        ]
+      ],
+      "decisions": 0,
+      "conflicts": 0,
+      "propagations": 13844,
+      "restarts": 0,
+      "result": "UNSAT",
+      "wall_time": 0.23506668999471003,
+      "experiment": "fixed_prefix",
+      "prefix_length": 6
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+experiment,worker_pid,prefix_length,T,K,saved_required,result,solve_time,encoding_time,variables,clauses,containment_clauses,containment_activation_variables,semantic_variables,auxiliary_variables,assumption_count,decisions,conflicts,propagations,restarts,actual_k,containment_time,schedule,fixed_actions,wall_time,error
+horizon_heatmap,4,,9,989,11,TIMEOUT,59.78820353499759,0.17053537799802143,57928,222728,7618,1,29000,28927,2,,,,,,,null,[],60.00283207200118,
+horizon_heatmap,5,,11,989,11,TIMEOUT,59.75855216799391,0.2012150529990322,67924,259956,7618,1,35000,32923,2,,,,,,,null,[],60.004503415002546,
+horizon_heatmap,6,,13,989,11,TIMEOUT,59.726725020998856,0.23157668899511918,77920,297184,7618,1,41000,36919,2,,,,,,,null,[],60.004111583999475,
+horizon_heatmap,7,,15,989,11,TIMEOUT,59.69670284899621,0.2627056000055745,87916,334412,7618,1,47000,40915,2,,,,,,,null,[],60.00394107700413,
+horizon_heatmap,8,,18,989,11,TIMEOUT,59.63771727900166,0.32257489200128475,102910,390254,7618,1,56000,46909,2,,,,,,,null,[],60.00462809899909,

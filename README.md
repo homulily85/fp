@@ -10,7 +10,7 @@ Trong môi trường đã có `python-sat`, `networkx`, `ruff`:
 
 ```bash
 python -m ffp_sat dataset/50_ep0.1_0_gilbert_1.in --firefighters 1 \
-  --time-limit 600 --solver cadical300 --seed 0 --json-out results/example.json \\
+  --time-limit 600 --solver cadical300 --seed 0 --json-out results/example.json \
   --export-cnf-dir results/cnf
 
 python -m ffp_sat.batch dataset --firefighters '[1,2]' --time-limit 600 --seed 0
@@ -51,6 +51,22 @@ Propagation chỉ chạy khi bật tùy chọn này và dùng solver chẩn đo�
 tăng đáng kể RAM và thời gian chạy. Nếu backend không hỗ trợ API đó, JSON ghi rõ lý
 do và solver vẫn tiếp tục giải bình thường. Chi tiết các trường xem
 phần CNF và search profile trong [hướng dẫn đọc kết quả](docs/RESULTS.md).
+
+Để so sánh độ khó của query theo các action đầu hoặc theo horizon, dùng CLI
+diagnostic riêng. Mỗi case tạo process và CaDiCaL mới; kết quả được ghi thành
+JSON/CSV trong diagnostics/:
+
+```bash
+python -m ffp_sat.diagnose fixed-prefix dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --T 9 --K 989 --schedule results/incumbent.json \
+  --max-prefix 6 --per-query-time 30
+
+python -m ffp_sat.diagnose heatmap dataset/1000_ep0.0075_0_gilbert_1.in \
+  --firefighters 1 --K 989 --horizons 9 11 13 15 18 --per-query-time 30
+```
+
+Xem hướng dẫn [diagnostic](docs/DIAGNOSTICS.md) để biết cách đọc timeout,
+metrics và schedule được validate.
 
 stdout in summary. stderr chỉ ghi khi có cập nhật trạng thái, kèm nguồn `HEURISTIC`,
 `PREPROCESS`, `SAT_QUERY`, `SAT`, `UNSAT` hoặc `CNF_EXPORT`; `SAT_QUERY` có horizon và objective bound, các dòng `SAT`/`UNSAT` ghi kết quả truy vấn tương ứng.
