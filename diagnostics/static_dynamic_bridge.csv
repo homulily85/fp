@@ -1,0 +1,4 @@
+stage,target,result,solve_time,variables,clauses,actual_k,containment_time,separator_size,canonical_safe_size,static_saved,decisions,conflicts,propagations,restarts
+static-12,12,SAT,0.30408877501031384,30174,116529,,,9,3,12,12042,266,865465,33
+exact-separator,,UNSAT,0.4161046269873623,46983,179963,,,,,,9738,238,564304,41
+pair-only,,UNSAT,69.51523592299782,46983,179972,,,,,,1626710,211794,676914421,3519

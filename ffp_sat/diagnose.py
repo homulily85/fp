@@ -13,6 +13,7 @@ from pysat.solvers import Solver
 
 from .action_canonical import ActionCanonicalEncoding
 from .canonical import CanonicalActionEncoding
+from .canonical_target import run_canonical_target_experiment, write_canonical_target_outputs
 from .early_exact import run_early_exact_experiment
 from .encoder import Encoder
 from .guidance import PhaseMode, build_consensus_pool, build_phase_literals, validate_phase_literals
@@ -20,7 +21,10 @@ from .instance import read_instance
 from .prefix_core_mining import run_prefix_core_mining
 from .prefix_trie_mining import run_prefix_trie_mining
 from .preprocess import preprocess
+from .round1_groups import run_round1_group_decomposition, write_round1_outputs
 from .simulator import simulate
+from .static_dynamic_bridge import run_static_dynamic_bridge, write_bridge_outputs
+from .static_separator import run_static_separator_experiment, write_static_outputs
 
 
 def positive_int(value):
@@ -477,7 +481,9 @@ def run_phase_case(
                 solve_started = started + payload
         if timed_out and not final_received:
             latest["result"] = "TIMEOUT"
-            latest["solve_time"] = min(timeout, max(0.0, time.monotonic() - solve_started)) if solve_started else 0.0
+            latest["solve_time"] = (
+                min(timeout, max(0.0, time.monotonic() - solve_started)) if solve_started else 0.0
+            )
         elif not final_received:
             latest.update(result="ERROR", error=f"Worker exited with code {process.exitcode}")
         latest["wall_time"] = time.monotonic() - started
@@ -599,12 +605,16 @@ def _canonical_worker(connection, path, firefighters, solver_name, horizon, boun
         metrics.update(
             **canonical_stats,
             total_variables=encoder.vars.top,
-            total_clauses=encoder.clauses + sum(canonical_stats[key] for key in (
-                "active_state_clauses",
-                "stop_clauses",
-                "nonempty_clauses",
-                "full_capacity_clauses",
-            )),
+            total_clauses=encoder.clauses
+            + sum(
+                canonical_stats[key]
+                for key in (
+                    "active_state_clauses",
+                    "stop_clauses",
+                    "nonempty_clauses",
+                    "full_capacity_clauses",
+                )
+            ),
         )
         connection.send(("ENCODED", metrics))
         connection.send(("SOLVE_STARTED", time.monotonic() - started))
@@ -695,7 +705,9 @@ def run_canonical_case(path, firefighters, solver_name, horizon, bound, mode, ti
                 solve_started = started + payload
         if timed_out and not final_received:
             latest["result"] = "TIMEOUT"
-            latest["solve_time"] = min(timeout, max(0.0, time.monotonic() - solve_started)) if solve_started else 0.0
+            latest["solve_time"] = (
+                min(timeout, max(0.0, time.monotonic() - solve_started)) if solve_started else 0.0
+            )
         elif not final_received:
             latest.update(result="ERROR", error=f"Worker exited with code {process.exitcode}")
         latest["wall_time"] = time.monotonic() - started
@@ -881,7 +893,9 @@ def run_action_canonical_case(path, firefighters, solver_name, horizon, bound, m
                 solve_started = started + payload
         if timed_out and not final_received:
             latest["result"] = "TIMEOUT"
-            latest["solve_time"] = min(timeout, max(0.0, time.monotonic() - solve_started)) if solve_started else 0.0
+            latest["solve_time"] = (
+                min(timeout, max(0.0, time.monotonic() - solve_started)) if solve_started else 0.0
+            )
         elif not final_received:
             latest.update(result="ERROR", error=f"Worker exited with code {process.exitcode}")
         latest["wall_time"] = time.monotonic() - started
@@ -1006,11 +1020,7 @@ def _action_canonical_replay_worker(
         for index, bound in enumerate(bounds):
             stage_name = "replay" if index < len(replay_bounds) else "final"
             assumption_started = time.monotonic()
-            assumptions = (
-                first_assumptions
-                if index == 0
-                else encoder.assumptions(horizon, bound, instance.n)
-            )
+            assumptions = first_assumptions if index == 0 else encoder.assumptions(horizon, bound, instance.n)
             assumption_time = time.monotonic() - assumption_started
 
             if replay_style == "late-append" and stage_name == "final":
@@ -1036,8 +1046,7 @@ def _action_canonical_replay_worker(
 
             action_stats = action_encoding.stats()
             canonical_clause_count = sum(
-                action_stats[key]
-                for key in ("indicator_clauses", "prefix_clauses", "full_capacity_clauses")
+                action_stats[key] for key in ("indicator_clauses", "prefix_clauses", "full_capacity_clauses")
             )
             stage = {
                 "index": index,
@@ -1090,8 +1099,7 @@ def _action_canonical_replay_worker(
 
         metrics.update(
             result=metrics["stages"][-1]["result"],
-            canonical_variables=len(action_encoding.y)
-            + action_encoding.full_capacity_auxiliary_variables,
+            canonical_variables=len(action_encoding.y) + action_encoding.full_capacity_auxiliary_variables,
             canonical_clauses=sum(
                 action_encoding.stats()[key]
                 for key in ("indicator_clauses", "prefix_clauses", "full_capacity_clauses")
@@ -1354,7 +1362,14 @@ def action_canonical_replay_experiment(
             if query_signature != base_final_query:
                 history_mismatch = True
             for reference, candidate in zip(base_history, replay, strict=False):
-                compare_keys = ("K", "result", "stats", "variables_before_solve", "clauses_before_solve", "assumptions")
+                compare_keys = (
+                    "K",
+                    "result",
+                    "stats",
+                    "variables_before_solve",
+                    "clauses_before_solve",
+                    "assumptions",
+                )
                 if any(reference.get(key) != candidate.get(key) for key in compare_keys):
                     history_mismatch = True
         if history_mismatch:
@@ -1566,7 +1581,9 @@ def main(argv=None):
     phase.add_argument("--firefighters", type=positive_int, required=True)
     phase.add_argument("--T", type=nonnegative_int, required=True)
     phase.add_argument("--K", type=nonnegative_int, required=True)
-    phase.add_argument("--schedule", type=Path, required=True, help="JSON result containing an incumbent schedule")
+    phase.add_argument(
+        "--schedule", type=Path, required=True, help="JSON result containing an incumbent schedule"
+    )
     phase.add_argument(
         "--modes",
         choices=[mode.value for mode in PhaseMode],
@@ -1609,9 +1626,7 @@ def main(argv=None):
         default=["base", "indicator-only", "prefix", "canonical"],
     )
     action_canonical.add_argument("--replay-bounds", type=nonnegative_int, nargs="+")
-    action_canonical.add_argument(
-        "--replay-style", choices=["integrated", "late-append"]
-    )
+    action_canonical.add_argument("--replay-style", choices=["integrated", "late-append"])
     action_canonical.add_argument("--replay-query-time", type=positive_float, default=90.0)
     action_canonical.add_argument("--final-query-time", type=positive_float, default=120.0)
     action_canonical.add_argument(
@@ -1686,6 +1701,69 @@ def main(argv=None):
     early_exact.add_argument("--exact-range", choices=["before", "through"], default="through")
     early_exact.add_argument("--solver", default="cadical300")
     early_exact.add_argument("--out-dir", type=Path)
+    round1_groups = subparsers.add_parser(
+        "round1-group-decomposition",
+        help="Partition first-round actions and solve groups persistently with limited calls",
+    )
+    round1_groups.add_argument("instance", type=Path)
+    round1_groups.add_argument("--firefighters", type=positive_int, required=True)
+    round1_groups.add_argument("--T", type=nonnegative_int, required=True)
+    round1_groups.add_argument("--K", type=nonnegative_int, required=True)
+    round1_groups.add_argument("--replay-bounds", type=nonnegative_int, nargs="+", default=[991, 990])
+    round1_groups.add_argument("--replay-query-time", type=positive_float, default=90.0)
+    round1_groups.add_argument("--group-warmup-time", type=positive_float, default=1800.0)
+    round1_groups.add_argument("--warm-root-time", type=positive_float, default=600.0)
+    round1_groups.add_argument("--group-levels", type=positive_int, nargs="+", default=[8, 16, 32, 64])
+    round1_groups.add_argument(
+        "--conflict-budgets",
+        type=positive_int,
+        nargs="+",
+        default=[100_000, 75_000, 50_000, 30_000],
+    )
+    round1_groups.add_argument("--total-time", type=positive_float, default=2600.0)
+    round1_groups.add_argument("--ranking-pool-size", type=positive_int, default=128)
+    round1_groups.add_argument("--seed", type=int, default=0)
+    round1_groups.add_argument("--solver", default="cadical300")
+    round1_groups.add_argument("--out-dir", type=Path)
+    static_separator = subparsers.add_parser(
+        "static-separator",
+        help="Solve the graph-only separator relaxation implied by a dynamic horizon",
+    )
+    static_separator.add_argument("instance", type=Path)
+    static_separator.add_argument("--firefighters", type=positive_int, required=True)
+    static_separator.add_argument("--T", type=nonnegative_int, required=True)
+    static_separator.add_argument("--K", type=nonnegative_int, required=True)
+    static_separator.add_argument("--time-limit", type=positive_float, default=600.0)
+    static_separator.add_argument("--solver", default="cadical300")
+    static_separator.add_argument("--out-dir", type=Path)
+    static_bridge = subparsers.add_parser(
+        "static-dynamic-bridge",
+        help="Test whether static separator witnesses admit exact dynamic schedules",
+    )
+    static_bridge.add_argument("instance", type=Path)
+    static_bridge.add_argument("--firefighters", type=positive_int, required=True)
+    static_bridge.add_argument("--T", type=positive_int, required=True)
+    static_bridge.add_argument("--K", type=nonnegative_int, required=True)
+    static_bridge.add_argument("--separator-witness", type=Path, required=True)
+    static_bridge.add_argument("--static-next-target", type=positive_int, default=12)
+    static_bridge.add_argument("--static-time", type=positive_float, default=600.0)
+    static_bridge.add_argument("--dynamic-time", type=positive_float, default=600.0)
+    static_bridge.add_argument("--solver", default="cadical300")
+    static_bridge.add_argument("--out-dir", type=Path)
+    canonical_target = subparsers.add_parser(
+        "canonical-target",
+        help="Solve an exact objective target using full action rounds and untouched witnesses",
+    )
+    canonical_target.add_argument("instance", type=Path)
+    canonical_target.add_argument("--firefighters", type=positive_int, required=True)
+    canonical_target.add_argument("--T", type=positive_int, required=True)
+    canonical_target.add_argument("--K", type=nonnegative_int, required=True)
+    canonical_target.add_argument("--modes", choices=["fresh", "replay"], nargs="+", default=["fresh", "replay"])
+    canonical_target.add_argument("--replay-bounds", type=nonnegative_int, nargs="+", default=[991, 990])
+    canonical_target.add_argument("--replay-query-time", type=positive_float, default=90.0)
+    canonical_target.add_argument("--final-query-time", type=positive_float, default=600.0)
+    canonical_target.add_argument("--solver", default="cadical300")
+    canonical_target.add_argument("--out-dir", type=Path)
     args = parser.parse_args(argv)
 
     try:
@@ -1760,21 +1838,58 @@ def main(argv=None):
         json_path.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
         csv_path = out_dir / f"{stem}.csv"
         fields = (
-            "record_type", "index", "mode", "stage", "K", "result", "prefix",
-            "source_k", "actual_depth", "solve_time", "core", "actual_k",
-            "containment_time", "variables_before_solve", "clauses_before_solve",
-            "decisions", "conflicts", "propagations", "restarts", "stats",
+            "record_type",
+            "index",
+            "mode",
+            "stage",
+            "K",
+            "result",
+            "prefix",
+            "source_k",
+            "actual_depth",
+            "solve_time",
+            "core",
+            "actual_k",
+            "containment_time",
+            "variables_before_solve",
+            "clauses_before_solve",
+            "decisions",
+            "conflicts",
+            "propagations",
+            "restarts",
+            "stats",
         )
         with csv_path.open("w", newline="", encoding="utf-8") as stream:
             writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
             writer.writeheader()
             for index, probe_row in enumerate(report.get("sanity_probes", [])):
-                writer.writerow({"record_type": "sanity", "index": index, **probe_row, "stats": json.dumps(probe_row.get("stats"))})
+                writer.writerow(
+                    {
+                        "record_type": "sanity",
+                        "index": index,
+                        **probe_row,
+                        "stats": json.dumps(probe_row.get("stats")),
+                    }
+                )
             for index, probe_row in enumerate(report.get("probes", [])):
-                writer.writerow({"record_type": "probe", "index": index, **probe_row, "stats": json.dumps(probe_row.get("stats"))})
+                writer.writerow(
+                    {
+                        "record_type": "probe",
+                        "index": index,
+                        **probe_row,
+                        "stats": json.dumps(probe_row.get("stats")),
+                    }
+                )
             for mode, master in report.get("master_comparison", {}).items():
                 for stage in master.get("stages", []):
-                    writer.writerow({"record_type": "master", "mode": mode, **stage, "stats": json.dumps(stage.get("stats"))})
+                    writer.writerow(
+                        {
+                            "record_type": "master",
+                            "mode": mode,
+                            **stage,
+                            "stats": json.dumps(stage.get("stats")),
+                        }
+                    )
         print(f"Result: {report['result']}\nJSON: {json_path}\nCSV: {csv_path}", flush=True)
         return int(report["result"] in {"ERROR", "SANITY_FAILED", "HISTORY_MISMATCH"})
     if args.experiment == "early-action-exact":
@@ -1817,28 +1932,55 @@ def main(argv=None):
         json_path.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
         csv_path = out_dir / "early_action_exact.csv"
         fields = (
-            "record_type", "mode", "stage", "horizon", "K", "result", "solve_time",
-            "actual_containment_time", "actual_k", "variables", "clauses", "assumptions",
-            "variables_before_solve", "clauses_before_solve", "early_exact_rounds",
-            "decisions", "conflicts", "propagations", "restarts", "stats",
+            "record_type",
+            "mode",
+            "stage",
+            "horizon",
+            "K",
+            "result",
+            "solve_time",
+            "actual_containment_time",
+            "actual_k",
+            "variables",
+            "clauses",
+            "assumptions",
+            "variables_before_solve",
+            "clauses_before_solve",
+            "early_exact_rounds",
+            "decisions",
+            "conflicts",
+            "propagations",
+            "restarts",
+            "stats",
         )
         with csv_path.open("w", newline="", encoding="utf-8") as stream:
             writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
             writer.writeheader()
             for row in report.get("containment_search", {}).get("queries", []):
-                writer.writerow({"record_type": "containment", **row,
-                                 "horizon": row.get("horizon"),
-                                 "assumptions": json.dumps(row.get("assumptions")),
-                                 "stats": json.dumps(row.get("stats"))})
+                writer.writerow(
+                    {
+                        "record_type": "containment",
+                        **row,
+                        "horizon": row.get("horizon"),
+                        "assumptions": json.dumps(row.get("assumptions")),
+                        "stats": json.dumps(row.get("stats")),
+                    }
+                )
             for mode, case in report.get("master_comparison", {}).items():
                 for row in case.get("stages", []):
-                    writer.writerow({"record_type": "master", "mode": mode, **row,
-                                     "horizon": args.T,
-                                     "early_exact_rounds": json.dumps(
-                                         case.get("early_exact_append", {}).get("rounds", [])
-                                     ),
-                                     "assumptions": json.dumps(row.get("assumptions")),
-                                     "stats": json.dumps(row.get("stats"))})
+                    writer.writerow(
+                        {
+                            "record_type": "master",
+                            "mode": mode,
+                            **row,
+                            "horizon": args.T,
+                            "early_exact_rounds": json.dumps(
+                                case.get("early_exact_append", {}).get("rounds", [])
+                            ),
+                            "assumptions": json.dumps(row.get("assumptions")),
+                            "stats": json.dumps(row.get("stats")),
+                        }
+                    )
         print(
             f"Result: {report.get('result', 'UNKNOWN')}\n"
             f"T_min: {report.get('containment_search', {}).get('min_containment_time')}\n"
@@ -1849,6 +1991,194 @@ def main(argv=None):
             flush=True,
         )
         return int(report.get("result") in {"ERROR", "HISTORY_MISMATCH", "CONTAINMENT_QUERY_ERROR"})
+    if args.experiment == "round1-group-decomposition":
+        if args.firefighters != 1:
+            parser.error("round1-group-decomposition currently requires --firefighters 1")
+        if args.T < 5:
+            parser.error("--T must be at least 5 because this diagnostic requires Tmin=5")
+        if args.K >= instance.n:
+            parser.error("--K must be less than n for a meaningful saved-vertex objective")
+        if len(args.group_levels) != len(args.conflict_budgets):
+            parser.error("--group-levels and --conflict-budgets must have equal lengths")
+        if not args.group_levels or args.group_levels[0] != 8:
+            parser.error("--group-levels must start at 8")
+        if any(right != 2 * left for left, right in zip(args.group_levels, args.group_levels[1:])):
+            parser.error("--group-levels must form a doubling sequence, for example 8 16 32 64")
+        if args.group_levels[-1] > instance.n:
+            parser.error("The final group count must not exceed n")
+        if any(bound <= args.K or bound > instance.n for bound in args.replay_bounds):
+            parser.error("Every replay bound must be greater than --K and at most n")
+        if any(left <= right for left, right in zip(args.replay_bounds, args.replay_bounds[1:])):
+            parser.error("--replay-bounds must be strictly descending")
+        try:
+            report = run_round1_group_decomposition(
+                args.instance,
+                args.firefighters,
+                args.solver,
+                args.T,
+                args.K,
+                args.replay_bounds,
+                args.replay_query_time,
+                args.group_warmup_time,
+                args.warm_root_time,
+                args.group_levels,
+                args.conflict_budgets,
+                args.total_time,
+                args.ranking_pool_size,
+                args.seed,
+            )
+        except (OSError, ValueError, TypeError, RuntimeError, AssertionError) as exc:
+            parser.error(f"Round-one group decomposition failed: {exc}")
+        out_dir = args.out_dir or Path("diagnostics")
+        json_path, csv_path = write_round1_outputs(report, out_dir)
+        if report.get("result") == "SAT_FOUND" and report.get("solution"):
+            solution_path = out_dir / "group_warm_root_solution.json"
+            solution_path.write_text(json.dumps(report["solution"], indent=2) + "\n", encoding="utf-8")
+        else:
+            solution_path = None
+        print(
+            f"Result: {report.get('result')}\n"
+            f"Limited solving: {report.get('preflight', {}).get('limited_solve_supported')}\n"
+            f"EARLY-EXACT clauses: {report.get('early_exact', {}).get('clauses_added')}\n"
+            f"Levels: {[(row['group_count'], row['unsat'], row['sat'], row['unknown']) for row in report.get('levels', [])]}\n"
+            f"Remaining round-1 vertices: {len(report.get('remaining_round1_vertices', []))}\n"
+            f"Warm root: {report.get('warm_root', {}).get('result')}\n"
+            f"JSON: {json_path}\nCSV: {csv_path}",
+            flush=True,
+        )
+        return int(
+            report.get("result") in {"ERROR", "LIMITED_SOLVE_UNSUPPORTED", "CONTAINMENT_PREREQUISITE_FAILED"}
+        )
+    if args.experiment == "static-separator":
+        if args.K > instance.n:
+            parser.error("--K must not exceed the number of vertices")
+        try:
+            report = run_static_separator_experiment(
+                args.instance,
+                args.firefighters,
+                args.T,
+                args.K,
+                args.solver,
+                args.time_limit,
+            )
+        except (OSError, ValueError, TypeError, RuntimeError, AssertionError) as exc:
+            parser.error(f"Static separator diagnostic failed: {exc}")
+        out_dir = args.out_dir or Path("diagnostics")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        target = report["target_query"]
+        if target.get("result") == "SAT":
+            witness_path = out_dir / "static_separator_witness.json"
+            witness_path.write_text(json.dumps(target["witness"], indent=2) + "\n", encoding="utf-8")
+            target["witness_path"] = str(witness_path)
+        json_path, csv_path = write_static_outputs(report, out_dir)
+        witness = target.get("witness", {})
+        print(
+            f"Static target {report['query']['saved_target']}: {report['result']}\n"
+            f"Defense budget: {report['query']['defense_budget']}\n"
+            f"Separator size: {witness.get('separator_size')}\n"
+            f"Canonical safe size: {witness.get('canonical_safe_size')}\n"
+            f"Static saved: {witness.get('static_saved')}\n"
+            f"JSON: {json_path}\nCSV: {csv_path}",
+            flush=True,
+        )
+        return int(target.get("result") == "ERROR")
+    if args.experiment == "static-dynamic-bridge":
+        if args.K > instance.n:
+            parser.error("--K must not exceed the number of vertices")
+        try:
+            report = run_static_dynamic_bridge(
+                args.instance,
+                args.firefighters,
+                args.T,
+                args.K,
+                args.separator_witness,
+                args.static_next_target,
+                args.static_time,
+                args.dynamic_time,
+                args.solver,
+            )
+        except (OSError, ValueError, TypeError, RuntimeError, AssertionError) as exc:
+            parser.error(f"Static-dynamic bridge diagnostic failed: {exc}")
+        out_dir = args.out_dir or Path("diagnostics")
+        json_path, csv_path = write_bridge_outputs(report, out_dir)
+        exact = report["exact_separator"]
+        pair_result = report["pair_only"]
+        if exact.get("result") == "SAT" or pair_result.get("result") == "SAT":
+            solution = exact if exact.get("result") == "SAT" else pair_result
+            solution_path = out_dir / "static_bridge_solution.json"
+            solution_path.write_text(json.dumps(solution, indent=2) + "\n", encoding="utf-8")
+        if report.get("pair_space") is not None:
+            candidate_path = out_dir / "static_pair_candidates.json"
+            candidate_path.write_text(
+                json.dumps(report["pair_space"], indent=2) + "\n", encoding="utf-8"
+            )
+            report["pair_space"]["candidate_path"] = str(candidate_path)
+            json_path, csv_path = write_bridge_outputs(report, out_dir)
+        pair_space = report.get("pair_space") or {}
+        print(
+            f"Static target {args.static_next_target}: {report['static_extension']['result']}\n"
+            f"Exact separator: {exact.get('result')}\n"
+            f"Pair {report['input_witness']['untouched_pair']}: {pair_result.get('result')}\n"
+            f"Static optimum: {report['static_extension'].get('static_optimum')}\n"
+            f"Pair candidates: "
+            f"{pair_space.get('boundary_feasible_pairs', 'not enumerated')}\n"
+            f"JSON: {json_path}\nCSV: {csv_path}",
+            flush=True,
+        )
+        return int(
+            report["static_extension"].get("result") == "ERROR"
+            or exact.get("result") == "ERROR"
+            or pair_result.get("result") == "ERROR"
+        )
+    if args.experiment == "canonical-target":
+        if args.firefighters != 1:
+            parser.error("canonical-target currently requires --firefighters 1")
+        if args.K > instance.n or instance.n - args.K != args.T + 2:
+            parser.error("canonical-target requires 0 <= K <= n and n-K = T+2")
+        if any(bound <= args.K or bound > instance.n for bound in args.replay_bounds):
+            parser.error("Every replay bound must be greater than --K and at most n")
+        if any(left <= right for left, right in zip(args.replay_bounds, args.replay_bounds[1:])):
+            parser.error("--replay-bounds must be strictly descending")
+        try:
+            report = run_canonical_target_experiment(
+                args.instance,
+                args.firefighters,
+                args.T,
+                args.K,
+                args.modes,
+                args.replay_bounds,
+                args.replay_query_time,
+                args.final_query_time,
+                args.solver,
+            )
+        except (OSError, ValueError, TypeError, RuntimeError, AssertionError) as exc:
+            parser.error(f"Canonical-target diagnostic failed: {exc}")
+        out_dir = args.out_dir or Path("diagnostics")
+        json_path, csv_path = write_canonical_target_outputs(report, out_dir)
+        solutions = {
+            mode: result
+            for mode, result in report["modes"].items()
+            if mode == "fresh" and result.get("result") == "SAT"
+        }
+        replay = report["modes"].get("replay", {})
+        replay_final = next(
+            (stage for stage in replay.get("stages", []) if stage.get("stage") == "final"),
+            {},
+        )
+        if replay_final.get("result") == "SAT":
+            solutions["replay"] = replay_final
+        if solutions:
+            (out_dir / "canonical_target_solution.json").write_text(
+                json.dumps(solutions, indent=2) + "\n", encoding="utf-8"
+            )
+        print(
+            f"Pair canonicalization regression: {report['equivalence_regression']['queries_checked']} queries passed\n"
+            f"Fresh: {report['modes'].get('fresh', {}).get('result')}\n"
+            f"Replay: {replay.get('result')}\n"
+            f"JSON: {json_path}\nCSV: {csv_path}",
+            flush=True,
+        )
+        return int(any(value.get("result") == "ERROR" for value in report["modes"].values()))
     if args.experiment == "prefix-trie-mining":
         if args.firefighters != 1:
             parser.error("prefix-trie-mining currently requires --firefighters 1")
@@ -1867,11 +2197,7 @@ def main(argv=None):
             if not hasattr(probe, "propagate"):
                 parser.error(f"SAT backend {args.solver!r} does not support propagate(); trie mining stopped")
             propagated = probe.propagate(assumptions=[1, 2])
-            if (
-                not isinstance(propagated, tuple)
-                or len(propagated) != 2
-                or propagated[0] is not False
-            ):
+            if not isinstance(propagated, tuple) or len(propagated) != 2 or propagated[0] is not False:
                 parser.error(
                     f"SAT backend {args.solver!r} failed the assumption-propagation contradiction check; "
                     "trie mining stopped"
@@ -1910,27 +2236,64 @@ def main(argv=None):
         json_path.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
         csv_path = out_dir / "prefix_trie_mining.csv"
         fields = (
-            "record_type", "index", "mode", "stage", "depth", "prefix", "parent_status",
-            "source_count", "best_source_k", "result", "solve_time", "propagation_time",
-            "query_wall_time", "actual_k", "containment_time", "pruned_schedules",
-            "variables_before_solve", "clauses_before_solve", "decisions", "conflicts",
-            "propagations", "restarts", "stats",
+            "record_type",
+            "index",
+            "mode",
+            "stage",
+            "depth",
+            "prefix",
+            "parent_status",
+            "source_count",
+            "best_source_k",
+            "result",
+            "solve_time",
+            "propagation_time",
+            "query_wall_time",
+            "actual_k",
+            "containment_time",
+            "pruned_schedules",
+            "variables_before_solve",
+            "clauses_before_solve",
+            "decisions",
+            "conflicts",
+            "propagations",
+            "restarts",
+            "stats",
         )
         with csv_path.open("w", newline="", encoding="utf-8") as stream:
             writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
             writer.writeheader()
             for index, row in enumerate(report.get("sanity_probes", [])):
-                writer.writerow({"record_type": "sanity", "index": index, **row,
-                                 "prefix": json.dumps(row.get("prefix")),
-                                 "stats": json.dumps(row.get("stats"))})
+                writer.writerow(
+                    {
+                        "record_type": "sanity",
+                        "index": index,
+                        **row,
+                        "prefix": json.dumps(row.get("prefix")),
+                        "stats": json.dumps(row.get("stats")),
+                    }
+                )
             for index, row in enumerate(report.get("trie", {}).get("probes", [])):
-                writer.writerow({"record_type": "trie_probe", "index": index, **row,
-                                 "prefix": json.dumps(row.get("prefix")),
-                                 "stats": json.dumps(row.get("stats"))})
+                writer.writerow(
+                    {
+                        "record_type": "trie_probe",
+                        "index": index,
+                        **row,
+                        "prefix": json.dumps(row.get("prefix")),
+                        "stats": json.dumps(row.get("stats")),
+                    }
+                )
             for mode, master in report.get("master_comparison", {}).items():
                 for row in master.get("stages", []):
-                    writer.writerow({"record_type": "master_stage", "mode": mode, **row,
-                                     "prefix": "", "stats": json.dumps(row.get("stats"))})
+                    writer.writerow(
+                        {
+                            "record_type": "master_stage",
+                            "mode": mode,
+                            **row,
+                            "prefix": "",
+                            "stats": json.dumps(row.get("stats")),
+                        }
+                    )
         print(f"Result: {report['result']}\nJSON: {json_path}\nCSV: {csv_path}", flush=True)
         return int(report["result"] in {"ERROR", "PROBE_ERROR", "SANITY_FAILED", "HISTORY_MISMATCH"})
     if args.experiment == "action-canonical":
@@ -2020,7 +2383,9 @@ def main(argv=None):
         try:
             probe = Solver(name=args.solver)
             if not hasattr(probe, "set_phases"):
-                parser.error(f"SAT backend {args.solver!r} does not support set_phases(); phase experiment stopped")
+                parser.error(
+                    f"SAT backend {args.solver!r} does not support set_phases(); phase experiment stopped"
+                )
             probe.delete()
         except Exception as exc:
             parser.error(f"Cannot initialize SAT backend {args.solver!r}: {exc}")

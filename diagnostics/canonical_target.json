@@ -1,0 +1,273 @@
+{
+  "query": {
+    "T": 9,
+    "K": 989,
+    "saved_target": 11,
+    "firefighters": 1
+  },
+  "equivalence_regression": {
+    "passed": true,
+    "seed": 0,
+    "graph_cases": 688,
+    "queries_checked": 1388,
+    "scope": "all graphs and nonempty fires through n=4; seeded n=5..6"
+  },
+  "idle_fill_regression": {
+    "passed": true,
+    "input_actions": [
+      [
+        1
+      ],
+      [],
+      []
+    ],
+    "canonical_schedule": [
+      [
+        1
+      ],
+      [
+        4
+      ],
+      [
+        5
+      ]
+    ],
+    "actual_k": 1,
+    "saved": 5
+  },
+  "modes": {
+    "fresh": {
+      "mode": "fresh",
+      "result": "TIMEOUT",
+      "stages": [
+        {
+          "index": 0,
+          "stage": "final",
+          "K": 989,
+          "result": "TIMEOUT",
+          "solve_time": 600.0,
+          "stats": null,
+          "variables": 49982,
+          "clauses": 188962,
+          "assumptions": [
+            46983,
+            49982
+          ]
+        }
+      ],
+      "timed_out_stage": {
+        "index": 0,
+        "stage": "final",
+        "K": 989
+      },
+      "wall_time": 600.0585306849971,
+      "base_variables": 46983,
+      "base_clauses": 179959,
+      "variables": 49982,
+      "clauses": 188962,
+      "objective_aux_variables": 0,
+      "objective_clauses": 0,
+      "canonical": {
+        "action_rounds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "action_clauses_added": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "exact_action_clauses": 9,
+        "untouched_witness_variables": 1000,
+        "untouched_counter_auxiliary_variables": 1999,
+        "untouched_counter_clauses": 6994,
+        "variables_added": 2999,
+        "clauses_added": 9003,
+        "untouched_assumption": 49982
+      },
+      "assumptions": [
+        46983,
+        49982
+      ]
+    },
+    "replay": {
+      "mode": "replay",
+      "result": "TIMEOUT",
+      "stages": [
+        {
+          "K": 991,
+          "result": "SAT",
+          "solve_time": 31.367521469015628,
+          "stats": {
+            "decisions": 483968,
+            "conflicts": 127951,
+            "propagations": 259210386,
+            "restarts": 1633
+          },
+          "actual_k": 991,
+          "containment_time": 6,
+          "schedule": [
+            [
+              568
+            ],
+            [
+              546
+            ],
+            [
+              599
+            ],
+            [
+              182
+            ],
+            [
+              977
+            ],
+            [
+              269
+            ]
+          ],
+          "assumptions": [
+            46983,
+            55947
+          ],
+          "variables": 55947,
+          "clauses": 214806,
+          "index": 0,
+          "stage": "replay"
+        },
+        {
+          "K": 990,
+          "result": "SAT",
+          "solve_time": 22.00054211000679,
+          "stats": {
+            "decisions": 285138,
+            "conflicts": 77017,
+            "propagations": 189453466,
+            "restarts": 1430
+          },
+          "actual_k": 990,
+          "containment_time": 6,
+          "schedule": [
+            [
+              568
+            ],
+            [
+              546
+            ],
+            [
+              599
+            ],
+            [
+              67
+            ],
+            [
+              732
+            ],
+            [
+              269
+            ]
+          ],
+          "assumptions": [
+            46983,
+            56938
+          ],
+          "variables": 56938,
+          "clauses": 218769,
+          "index": 1,
+          "stage": "replay"
+        },
+        {
+          "index": 2,
+          "stage": "final",
+          "K": 989,
+          "result": "TIMEOUT",
+          "solve_time": 600.0,
+          "stats": null,
+          "variables": 60927,
+          "clauses": 231731,
+          "assumptions": [
+            46983,
+            57928,
+            60927
+          ]
+        }
+      ],
+      "timed_out_stage": {
+        "index": 2,
+        "stage": "final",
+        "K": 989
+      },
+      "wall_time": 653.6522569289955,
+      "pre_append": {
+        "variables": 57928,
+        "clauses": 222728,
+        "objective_assumptions": [
+          46983,
+          57928
+        ],
+        "assumptions": [
+          46983,
+          57928,
+          60927
+        ],
+        "objective_aux_variables": 10945,
+        "objective_clauses": 42769
+      },
+      "canonical_append": {
+        "action_rounds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "action_clauses_added": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "exact_action_clauses": 9,
+        "untouched_witness_variables": 1000,
+        "untouched_counter_auxiliary_variables": 1999,
+        "untouched_counter_clauses": 6994,
+        "variables_added": 2999,
+        "clauses_added": 9003,
+        "untouched_assumption": 60927
+      },
+      "post_append": {
+        "variables": 60927,
+        "clauses": 231731,
+        "assumptions": [
+          46983,
+          57928,
+          60927
+        ],
+        "objective_aux_variables": 10945,
+        "objective_clauses": 42769
+      }
+    }
+  }
+}

@@ -1,0 +1,5 @@
+mode,stage,K,result,solve_time,encoding_time,variables,clauses,objective_aux_variables,objective_clauses,exact_action_clauses,untouched_witness_variables,untouched_counter_auxiliary_variables,untouched_counter_clauses,actual_k,containment_time,decisions,conflicts,propagations,restarts
+fresh,canonical-query,989,TIMEOUT,,,49982,188962,0,0,9,1000,1999,6994,,,,,,
+replay,replay,991,SAT,31.367521469015628,,55947,214806,,,9,1000,1999,6994,991,6,483968,127951,259210386,1633
+replay,replay,990,SAT,22.00054211000679,,56938,218769,,,9,1000,1999,6994,990,6,285138,77017,189453466,1430
+replay,final,989,TIMEOUT,600.0,,60927,231731,,,9,1000,1999,6994,,,,,,

@@ -1,0 +1,67 @@
+{
+  "query": {
+    "T": 9,
+    "K": 989,
+    "saved_target": 11,
+    "firefighters": 1
+  },
+  "equivalence_regression": {
+    "passed": true,
+    "seed": 0,
+    "graph_cases": 688,
+    "queries_checked": 1388,
+    "scope": "all graphs and nonempty fires through n=4; seeded n=5..6"
+  },
+  "idle_fill_regression": {
+    "passed": true,
+    "input_actions": [
+      [
+        1
+      ],
+      [],
+      []
+    ],
+    "canonical_schedule": [
+      [
+        1
+      ],
+      [
+        4
+      ],
+      [
+        5
+      ]
+    ],
+    "actual_k": 1,
+    "saved": 5
+  },
+  "modes": {
+    "fresh": {
+      "mode": "fresh",
+      "result": "TIMEOUT",
+      "stages": [
+        {
+          "index": 0,
+          "stage": "final",
+          "K": 989,
+          "result": "TIMEOUT",
+          "solve_time": 600.0,
+          "stats": null
+        }
+      ],
+      "timed_out_stage": {
+        "index": 0,
+        "stage": "final",
+        "K": 989
+      },
+      "wall_time": 600.0585306849971
+    },
+    "replay": {
+      "mode": "replay",
+      "result": "ERROR",
+      "stages": [],
+      "error": "ValueError: Containment requires an existing horizon",
+      "wall_time": 0.06972286198288202
+    }
+  }
+}

@@ -1,0 +1,2 @@
+target,result,solve_time,separator_size,model_safe_size,canonical_safe_size,static_saved,decisions,conflicts,propagations,restarts
+,SAT,,,,,,,,,
