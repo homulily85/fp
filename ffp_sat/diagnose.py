@@ -1759,11 +1759,20 @@ def main(argv=None):
     benders.add_argument("--firefighters", type=positive_int, required=True)
     benders.add_argument("--T", type=positive_int, required=True)
     benders.add_argument("--K", type=nonnegative_int, required=True)
+    benders.add_argument("--mode", choices=["single-core", "multi-small-core"], default="single-core")
     benders.add_argument("--max-iterations", type=positive_int, default=64)
     benders.add_argument("--master-query-time", type=positive_float, default=30.0)
     benders.add_argument("--subproblem-time", type=positive_float, default=10.0)
     benders.add_argument("--subproblem-retry-time", type=positive_float, default=60.0)
-    benders.add_argument("--core-minimize-time", type=positive_float, default=2.0)
+    benders.add_argument(
+        "--core-minimize-time", "--core-minimize-soft-limit",
+        dest="core_minimize_soft_limit", type=positive_float, default=2.0,
+    )
+    benders.add_argument("--subset-scan-max-size", type=positive_int, default=3)
+    benders.add_argument("--core-restarts", type=positive_int, default=8)
+    benders.add_argument("--core-restart-stop-size", type=positive_int, default=2)
+    benders.add_argument("--calibration-full-solve", type=nonnegative_int, default=16)
+    benders.add_argument("--replay-separator-from", type=str)
     benders.add_argument("--total-time", type=positive_float, default=1200.0)
     benders.add_argument("--seed-witness", type=Path, action="append", default=[])
     benders.add_argument("--solver", default="cadical300")
@@ -1805,6 +1814,12 @@ def main(argv=None):
         if instance.n - args.K != args.T + 2:
             parser.error("separator-benders-pilot requires n-K = T+2 for the D=1 canonical target")
         try:
+            with Solver(name=args.solver, bootstrap_with=[[-1]]) as propagation_probe:
+                outcome = propagation_probe.propagate(assumptions=[1])
+                if not isinstance(outcome, tuple) or len(outcome) != 2 or outcome[0] is not False:
+                    parser.error(
+                        f"SAT backend {args.solver!r} propagate() failed contradiction semantics preflight"
+                    )
             # Verify only the feature needed for sound Benders cuts.  PySAT's
             # installed Cadical300 wrapper exposes solve_limited() but raises
             # NotImplementedError when clear_interrupt() is used, so the pilot
@@ -1823,8 +1838,10 @@ def main(argv=None):
             report = run_separator_benders_pilot(
                 args.instance, args.firefighters, args.T, args.K, args.solver,
                 args.max_iterations, args.master_query_time, args.subproblem_time,
-                args.subproblem_retry_time, args.core_minimize_time, args.total_time,
-                args.seed_witness,
+                args.subproblem_retry_time, args.core_minimize_soft_limit, args.total_time,
+                args.seed_witness, args.mode, args.subset_scan_max_size, args.core_restarts,
+                args.core_restart_stop_size, args.calibration_full_solve,
+                args.replay_separator_from,
             )
         except (OSError, ValueError, TypeError, RuntimeError, AssertionError) as exc:
             parser.error(f"Separator Benders pilot failed: {exc}")

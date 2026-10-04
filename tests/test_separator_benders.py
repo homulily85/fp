@@ -69,6 +69,41 @@ class SeparatorBendersTests(unittest.TestCase):
         self.assertEqual(result["objective_variables"], 0)
         self.assertEqual(result["objective_clauses"], 0)
 
+    def test_multi_small_core_propagation_cut_matches_temporal_unsat(self):
+        instance = graph(6, [(0, 1), (1, 2), (2, 3)])
+        result = _temporal_candidate(
+            instance, [3], 1, "cadical300", 5, 1,
+            mode="multi-small-core", subset_scan_max_size=1,
+            core_restarts=2, core_restart_stop_size=2,
+            calibration_full_solve=1,
+        )
+        self.assertEqual(result["result"], "UNSAT")
+        self.assertEqual(result["propagation_scan"]["cores"], [[3]])
+        self.assertEqual(result["candidate_cores"][0]["source_type"], "propagation")
+        self.assertEqual(result["candidate_cores"][0]["reduced"], [3])
+        self.assertTrue(result["full_temporal_solved"])
+
+    def test_multi_small_core_adds_all_non_subsumed_cuts(self):
+        instance = graph(6, [(0, 1), (1, 2), (2, 3)])
+        path = self.root / "path.in"
+        write_instance(path, instance)
+        seed_path = self.root / "seed.json"
+        seed_path.write_text(json.dumps({"separator": [3], "safe_region": [4, 5]}), encoding="utf-8")
+        report = run_separator_benders_pilot(
+            path, firefighters=1, horizon=1, burned_bound=3,
+            solver_name="cadical300", max_iterations=4,
+            master_query_time=5, subproblem_time=5, subproblem_retry_time=5,
+            core_minimize_time=1, total_time=30, seed_witnesses=[seed_path],
+            mode="multi-small-core", subset_scan_max_size=1,
+            core_restarts=2, calibration_full_solve=1,
+        )
+        first = report["iterations"][0]
+        self.assertEqual(first["result"], "UNSAT")
+        self.assertEqual(first["cuts_generated"], 1)
+        self.assertEqual(first["cuts_added_this_iteration"], 1)
+        self.assertEqual(report["summary"]["active_cut_histogram"], {1: 1})
+        self.assertEqual(report["result"], "FOUND_DYNAMIC_SOLUTION")
+
     def test_end_to_end_pilot_adds_sound_cut_then_finds_sat(self):
         instance = graph(6, [(0, 1), (1, 2), (2, 3)])
         path = self.root / "path.in"
