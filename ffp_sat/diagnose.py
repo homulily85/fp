@@ -22,6 +22,7 @@ from .prefix_core_mining import run_prefix_core_mining
 from .prefix_trie_mining import run_prefix_trie_mining
 from .preprocess import preprocess
 from .round1_groups import run_round1_group_decomposition, write_round1_outputs
+from .separator_benders import run_separator_benders_pilot, write_benders_outputs
 from .simulator import simulate
 from .static_dynamic_bridge import run_static_dynamic_bridge, write_bridge_outputs
 from .static_separator import run_static_separator_experiment, write_static_outputs
@@ -1750,6 +1751,23 @@ def main(argv=None):
     static_bridge.add_argument("--dynamic-time", type=positive_float, default=600.0)
     static_bridge.add_argument("--solver", default="cadical300")
     static_bridge.add_argument("--out-dir", type=Path)
+    benders = subparsers.add_parser(
+        "separator-benders-pilot",
+        help="Pilot a persistent static separator master with temporal UNSAT-core cuts",
+    )
+    benders.add_argument("instance", type=Path)
+    benders.add_argument("--firefighters", type=positive_int, required=True)
+    benders.add_argument("--T", type=positive_int, required=True)
+    benders.add_argument("--K", type=nonnegative_int, required=True)
+    benders.add_argument("--max-iterations", type=positive_int, default=64)
+    benders.add_argument("--master-query-time", type=positive_float, default=30.0)
+    benders.add_argument("--subproblem-time", type=positive_float, default=10.0)
+    benders.add_argument("--subproblem-retry-time", type=positive_float, default=60.0)
+    benders.add_argument("--core-minimize-time", type=positive_float, default=2.0)
+    benders.add_argument("--total-time", type=positive_float, default=1200.0)
+    benders.add_argument("--seed-witness", type=Path, action="append", default=[])
+    benders.add_argument("--solver", default="cadical300")
+    benders.add_argument("--out-dir", type=Path)
     canonical_target = subparsers.add_parser(
         "canonical-target",
         help="Solve an exact objective target using full action rounds and untouched witnesses",
@@ -1781,6 +1799,50 @@ def main(argv=None):
         metadata["per_query_time"] = args.per_query_time
     if args.K > instance.n:
         parser.error("--K must not exceed the number of vertices")
+    if args.experiment == "separator-benders-pilot":
+        if args.firefighters != 1:
+            parser.error("separator-benders-pilot currently supports only --firefighters 1")
+        if instance.n - args.K != args.T + 2:
+            parser.error("separator-benders-pilot requires n-K = T+2 for the D=1 canonical target")
+        try:
+            # Verify only the feature needed for sound Benders cuts.  PySAT's
+            # installed Cadical300 wrapper exposes solve_limited() but raises
+            # NotImplementedError when clear_interrupt() is used, so the pilot
+            # hard-limits fresh temporal workers by process isolation instead.
+            with Solver(name=args.solver, bootstrap_with=[[-1, -2]]) as probe:
+                if not hasattr(probe, "get_core"):
+                    parser.error(f"SAT backend {args.solver!r} lacks assumption-core support")
+                if probe.solve(assumptions=[1, 2]):
+                    parser.error(f"SAT backend {args.solver!r} failed assumption-core sanity check")
+                core = probe.get_core()
+                if core is None or not core or not set(core).issubset({1, 2}):
+                    parser.error(f"SAT backend {args.solver!r} returned an invalid assumption core")
+        except (RuntimeError, AttributeError, TypeError) as exc:
+            parser.error(f"Cannot verify Benders solver APIs for {args.solver!r}: {exc}")
+        try:
+            report = run_separator_benders_pilot(
+                args.instance, args.firefighters, args.T, args.K, args.solver,
+                args.max_iterations, args.master_query_time, args.subproblem_time,
+                args.subproblem_retry_time, args.core_minimize_time, args.total_time,
+                args.seed_witness,
+            )
+        except (OSError, ValueError, TypeError, RuntimeError, AssertionError) as exc:
+            parser.error(f"Separator Benders pilot failed: {exc}")
+        out_dir = args.out_dir or Path("diagnostics")
+        json_path, csv_path = write_benders_outputs(report, out_dir)
+        if report.get("result") == "FOUND_DYNAMIC_SOLUTION":
+            (out_dir / "separator_benders_solution.json").write_text(
+                json.dumps(report["solution"], indent=2) + "\n", encoding="utf-8"
+            )
+        print(
+            f"Benders pilot: {report['result']}\n"
+            f"Candidates: {report.get('summary', {}).get('iterations')}\n"
+            f"UNSAT cores raw/reduced: {report.get('summary', {}).get('raw_core_histogram')} / "
+            f"{report.get('summary', {}).get('reduced_core_histogram')}\n"
+            f"JSON: {json_path}\nCSV: {csv_path}",
+            flush=True,
+        )
+        return int(report.get("result") in {"ERROR", "INVALID_TEMPORAL_CORE", "MASTER_MODEL_VALIDATION_FAILED"})
     if args.experiment == "prefix-core-mining":
         if any(bound <= args.K or bound > instance.n for bound in (args.replay_bounds or [])):
             parser.error("Every replay bound must be greater than --K and at most n")

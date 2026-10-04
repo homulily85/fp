@@ -1,0 +1,7296 @@
+{
+  "query": {
+    "T": 9,
+    "K": 989,
+    "defense_budget": 9,
+    "saved_target": 11,
+    "firefighters": 1
+  },
+  "configuration": {
+    "solver": "cadical300",
+    "max_iterations": 64,
+    "master_query_time": 30.0,
+    "subproblem_time": 10.0,
+    "subproblem_retry_time": 60.0,
+    "core_minimize_time": 2.0,
+    "total_time": 1200.0,
+    "master_query_timeout_mode": "soft; Cadical300 limited-solve interruption is unsupported",
+    "subproblem_timeout_mode": "hard process timeout",
+    "core_minimize_timeout_mode": "posthoc per-call elapsed-time check; a CaDiCaL call cannot be preempted while retaining its learned state"
+  },
+  "backend_capabilities": {
+    "assumption_core": true,
+    "limited_solve": false,
+    "master_wall_timeout": "cannot interrupt persistent CaDiCaL; completed result is reported even if over budget"
+  },
+  "seed_witnesses": [
+    {
+      "source": "diagnostics/static_dynamic_bridge.json:static_extension:witness",
+      "separator": [
+        1,
+        4,
+        31,
+        37,
+        202,
+        636,
+        651,
+        713,
+        717
+      ],
+      "safe_region": [
+        722,
+        791,
+        950
+      ],
+      "safe_size": 3
+    },
+    {
+      "source": "diagnostics/static_dynamic_bridge.json:input_witness",
+      "separator": [
+        379,
+        516,
+        881,
+        882,
+        885,
+        893,
+        895,
+        962,
+        963
+      ],
+      "safe_region": [
+        269,
+        486
+      ],
+      "safe_size": 2
+    }
+  ],
+  "iterations": [
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        41989,
+        41998,
+        42079,
+        42097,
+        42592,
+        43894,
+        43939,
+        44125,
+        44137
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2555400290002581,
+      "stats": {
+        "decisions": 9554,
+        "conflicts": 182,
+        "propagations": 346390,
+        "restarts": 20
+      },
+      "raw_core_literals": [
+        41989,
+        41998,
+        42079,
+        42097,
+        42592,
+        43894,
+        43939,
+        44125,
+        44137
+      ],
+      "raw_core": [
+        1,
+        4,
+        31,
+        37,
+        202,
+        636,
+        651,
+        713,
+        717
+      ],
+      "reduced_core_literals": [
+        42592,
+        43894,
+        43939,
+        44125,
+        44137
+      ],
+      "reduced_core": [
+        202,
+        636,
+        651,
+        713,
+        717
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 9,
+      "core_minimize_time": 0.292238941998221,
+      "core_minimize_timeouts": 0,
+      "source": "diagnostics/static_dynamic_bridge.json:static_extension:witness",
+      "iteration": 1,
+      "separator": [
+        1,
+        4,
+        31,
+        37,
+        202,
+        636,
+        651,
+        713,
+        717
+      ],
+      "raw_safe_region": [
+        722,
+        791,
+        950
+      ],
+      "canonical_safe_region": [
+        722,
+        791,
+        950
+      ],
+      "master_solve_time": null,
+      "master_stats": null,
+      "retry": false,
+      "master_clauses": 64646,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 1,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        43123,
+        43534,
+        44629,
+        44632,
+        44641,
+        44665,
+        44671,
+        44872,
+        44875
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.4495333199738525,
+      "stats": {
+        "decisions": 9800,
+        "conflicts": 284,
+        "propagations": 656803,
+        "restarts": 42
+      },
+      "raw_core_literals": [
+        43123,
+        43534,
+        44629,
+        44632,
+        44641,
+        44665,
+        44671,
+        44872,
+        44875
+      ],
+      "raw_core": [
+        379,
+        516,
+        881,
+        882,
+        885,
+        893,
+        895,
+        962,
+        963
+      ],
+      "reduced_core_literals": [
+        44632,
+        44641,
+        44665,
+        44671,
+        44872,
+        44875
+      ],
+      "reduced_core": [
+        882,
+        885,
+        893,
+        895,
+        962,
+        963
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 9,
+      "core_minimize_time": 0.8372776080213953,
+      "core_minimize_timeouts": 0,
+      "source": "diagnostics/static_dynamic_bridge.json:input_witness",
+      "iteration": 2,
+      "separator": [
+        379,
+        516,
+        881,
+        882,
+        885,
+        893,
+        895,
+        962,
+        963
+      ],
+      "raw_safe_region": [],
+      "canonical_safe_region": [
+        269,
+        486
+      ],
+      "master_solve_time": null,
+      "master_stats": null,
+      "retry": false,
+      "master_clauses": 64647,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 2,
+      "theoretical_separator_coverage": {
+        "fraction": 6.139573112702117e-14,
+        "log10_fraction": -13.211861824501014
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44980,
+        44983
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.276229571987642,
+      "stats": {
+        "decisions": 9444,
+        "conflicts": 140,
+        "propagations": 303554,
+        "restarts": 11
+      },
+      "raw_core_literals": [
+        44206,
+        44320,
+        44692,
+        44767,
+        44881,
+        44947,
+        44980,
+        44983
+      ],
+      "raw_core": [
+        740,
+        778,
+        902,
+        927,
+        965,
+        987,
+        998,
+        999
+      ],
+      "reduced_core_literals": [
+        44767,
+        44881,
+        44947,
+        44980,
+        44983
+      ],
+      "reduced_core": [
+        927,
+        965,
+        987,
+        998,
+        999
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 8,
+      "core_minimize_time": 0.45930928000598215,
+      "core_minimize_timeouts": 0,
+      "source": "master:1",
+      "iteration": 3,
+      "separator": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        998,
+        999
+      ],
+      "raw_safe_region": [
+        48,
+        71
+      ],
+      "canonical_safe_region": [
+        48,
+        71
+      ],
+      "master_solve_time": 0.0018361809779889882,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64648,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 3,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44977,
+        44983
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2613855680101551,
+      "stats": {
+        "decisions": 9471,
+        "conflicts": 132,
+        "propagations": 312469,
+        "restarts": 15
+      },
+      "raw_core_literals": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44977,
+        44983
+      ],
+      "raw_core": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        997,
+        999
+      ],
+      "reduced_core_literals": [
+        44692,
+        44767,
+        44881,
+        44947,
+        44983
+      ],
+      "reduced_core": [
+        902,
+        927,
+        965,
+        987,
+        999
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 1.087709527084371,
+      "core_minimize_timeouts": 0,
+      "source": "master:2",
+      "iteration": 4,
+      "separator": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        997,
+        999
+      ],
+      "raw_safe_region": [
+        48,
+        71
+      ],
+      "canonical_safe_region": [
+        48,
+        71
+      ],
+      "master_solve_time": 0.0011421370145399123,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64649,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 4,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44977,
+        44980
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3032721500203479,
+      "stats": {
+        "decisions": 9597,
+        "conflicts": 207,
+        "propagations": 474629,
+        "restarts": 28
+      },
+      "raw_core_literals": [
+        44206,
+        44320,
+        44692,
+        44767,
+        44881,
+        44947,
+        44977,
+        44980
+      ],
+      "raw_core": [
+        740,
+        778,
+        902,
+        927,
+        965,
+        987,
+        997,
+        998
+      ],
+      "reduced_core_literals": [
+        44692,
+        44767,
+        44881,
+        44947,
+        44980
+      ],
+      "reduced_core": [
+        902,
+        927,
+        965,
+        987,
+        998
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 12,
+      "core_minimize_time": 1.2109110468882136,
+      "core_minimize_timeouts": 0,
+      "source": "master:3",
+      "iteration": 5,
+      "separator": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        997,
+        998
+      ],
+      "raw_safe_region": [
+        48,
+        71
+      ],
+      "canonical_safe_region": [
+        48,
+        71
+      ],
+      "master_solve_time": 0.001385253999615088,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64650,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 5,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44974,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2920216350175906,
+      "stats": {
+        "decisions": 9620,
+        "conflicts": 207,
+        "propagations": 406024,
+        "restarts": 28
+      },
+      "raw_core_literals": [
+        44206,
+        44320,
+        44692,
+        44767,
+        44881,
+        44947,
+        44974,
+        44977
+      ],
+      "raw_core": [
+        740,
+        778,
+        902,
+        927,
+        965,
+        987,
+        996,
+        997
+      ],
+      "reduced_core_literals": [
+        44692,
+        44767,
+        44881,
+        44947,
+        44974
+      ],
+      "reduced_core": [
+        902,
+        927,
+        965,
+        987,
+        996
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.4924153820320498,
+      "core_minimize_timeouts": 0,
+      "source": "master:4",
+      "iteration": 6,
+      "separator": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        996,
+        997
+      ],
+      "raw_safe_region": [
+        48,
+        71
+      ],
+      "canonical_safe_region": [
+        48,
+        71
+      ],
+      "master_solve_time": 0.0012999179889447987,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64651,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 6,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44971,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2964890980219934,
+      "stats": {
+        "decisions": 9609,
+        "conflicts": 197,
+        "propagations": 472559,
+        "restarts": 28
+      },
+      "raw_core_literals": [
+        44206,
+        44320,
+        44692,
+        44767,
+        44881,
+        44947,
+        44971,
+        44977
+      ],
+      "raw_core": [
+        740,
+        778,
+        902,
+        927,
+        965,
+        987,
+        995,
+        997
+      ],
+      "reduced_core_literals": [
+        44692,
+        44767,
+        44881,
+        44947,
+        44971
+      ],
+      "reduced_core": [
+        902,
+        927,
+        965,
+        987,
+        995
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.9371775250474457,
+      "core_minimize_timeouts": 0,
+      "source": "master:5",
+      "iteration": 7,
+      "separator": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        995,
+        997
+      ],
+      "raw_safe_region": [
+        48,
+        71
+      ],
+      "canonical_safe_region": [
+        48,
+        71
+      ],
+      "master_solve_time": 0.0010887469979934394,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64652,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 7,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44968,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.28190534200984985,
+      "stats": {
+        "decisions": 9648,
+        "conflicts": 196,
+        "propagations": 421137,
+        "restarts": 24
+      },
+      "raw_core_literals": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44968,
+        44977
+      ],
+      "raw_core": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        994,
+        997
+      ],
+      "reduced_core_literals": [
+        44692,
+        44767,
+        44881,
+        44947,
+        44968
+      ],
+      "reduced_core": [
+        902,
+        927,
+        965,
+        987,
+        994
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 14,
+      "core_minimize_time": 0.9624387819785625,
+      "core_minimize_timeouts": 0,
+      "source": "master:6",
+      "iteration": 8,
+      "separator": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        994,
+        997
+      ],
+      "raw_safe_region": [
+        48,
+        71
+      ],
+      "canonical_safe_region": [
+        48,
+        71
+      ],
+      "master_solve_time": 0.001102843991247937,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64653,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 8,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44965,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3160922419920098,
+      "stats": {
+        "decisions": 9664,
+        "conflicts": 214,
+        "propagations": 455608,
+        "restarts": 29
+      },
+      "raw_core_literals": [
+        44206,
+        44320,
+        44692,
+        44767,
+        44881,
+        44947,
+        44965,
+        44977
+      ],
+      "raw_core": [
+        740,
+        778,
+        902,
+        927,
+        965,
+        987,
+        993,
+        997
+      ],
+      "reduced_core_literals": [
+        44692,
+        44767,
+        44881,
+        44947,
+        44965
+      ],
+      "reduced_core": [
+        902,
+        927,
+        965,
+        987,
+        993
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.6430469939659815,
+      "core_minimize_timeouts": 0,
+      "source": "master:7",
+      "iteration": 9,
+      "separator": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        993,
+        997
+      ],
+      "raw_safe_region": [
+        48,
+        71
+      ],
+      "canonical_safe_region": [
+        48,
+        71
+      ],
+      "master_solve_time": 0.001073692983482033,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64654,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 9,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44962,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.29317838698625565,
+      "stats": {
+        "decisions": 9644,
+        "conflicts": 232,
+        "propagations": 471245,
+        "restarts": 26
+      },
+      "raw_core_literals": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44962,
+        44977
+      ],
+      "raw_core": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        992,
+        997
+      ],
+      "reduced_core_literals": [
+        44692,
+        44767,
+        44881,
+        44947,
+        44962
+      ],
+      "reduced_core": [
+        902,
+        927,
+        965,
+        987,
+        992
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 14,
+      "core_minimize_time": 1.400464022968663,
+      "core_minimize_timeouts": 0,
+      "source": "master:8",
+      "iteration": 10,
+      "separator": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        992,
+        997
+      ],
+      "raw_safe_region": [
+        48,
+        71
+      ],
+      "canonical_safe_region": [
+        48,
+        71
+      ],
+      "master_solve_time": 0.00110122500336729,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64655,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 10,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44959,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.4192362669855356,
+      "stats": {
+        "decisions": 9372,
+        "conflicts": 105,
+        "propagations": 217357,
+        "restarts": 3
+      },
+      "raw_core_literals": [
+        44206,
+        44320,
+        44692,
+        44767,
+        44881,
+        44947,
+        44959
+      ],
+      "raw_core": [
+        740,
+        778,
+        902,
+        927,
+        965,
+        987,
+        991
+      ],
+      "reduced_core_literals": [
+        44692,
+        44767,
+        44881,
+        44947,
+        44959
+      ],
+      "reduced_core": [
+        902,
+        927,
+        965,
+        987,
+        991
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 7,
+      "core_minimize_time": 0.496026838052785,
+      "core_minimize_timeouts": 0,
+      "source": "master:9",
+      "iteration": 11,
+      "separator": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        991,
+        997
+      ],
+      "raw_safe_region": [
+        48,
+        71
+      ],
+      "canonical_safe_region": [
+        48,
+        71
+      ],
+      "master_solve_time": 0.0012703810061793774,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64656,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 11,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44956,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.30306214198935777,
+      "stats": {
+        "decisions": 9664,
+        "conflicts": 225,
+        "propagations": 468622,
+        "restarts": 30
+      },
+      "raw_core_literals": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44956,
+        44977
+      ],
+      "raw_core": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        990,
+        997
+      ],
+      "reduced_core_literals": [
+        44692,
+        44767,
+        44881,
+        44947,
+        44956,
+        44977
+      ],
+      "reduced_core": [
+        902,
+        927,
+        965,
+        987,
+        990,
+        997
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 9,
+      "core_minimize_time": 0.5219094540225342,
+      "core_minimize_timeouts": 0,
+      "source": "master:10",
+      "iteration": 12,
+      "separator": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        990,
+        997
+      ],
+      "raw_safe_region": [
+        48,
+        71
+      ],
+      "canonical_safe_region": [
+        48,
+        71
+      ],
+      "master_solve_time": 0.0011912740010302514,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64657,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 12,
+      "theoretical_separator_coverage": {
+        "fraction": 6.139573112702117e-14,
+        "log10_fraction": -13.211861824501014
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44953,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3031531179731246,
+      "stats": {
+        "decisions": 9685,
+        "conflicts": 224,
+        "propagations": 500044,
+        "restarts": 36
+      },
+      "raw_core_literals": [
+        44206,
+        44320,
+        44692,
+        44767,
+        44881,
+        44947,
+        44953,
+        44977
+      ],
+      "raw_core": [
+        740,
+        778,
+        902,
+        927,
+        965,
+        987,
+        989,
+        997
+      ],
+      "reduced_core_literals": [
+        44692,
+        44767,
+        44881,
+        44947,
+        44953,
+        44977
+      ],
+      "reduced_core": [
+        902,
+        927,
+        965,
+        987,
+        989,
+        997
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 8,
+      "core_minimize_time": 0.6814099790062755,
+      "core_minimize_timeouts": 0,
+      "source": "master:11",
+      "iteration": 13,
+      "separator": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        989,
+        997
+      ],
+      "raw_safe_region": [
+        48,
+        71
+      ],
+      "canonical_safe_region": [
+        48,
+        71
+      ],
+      "master_solve_time": 0.0010382049949839711,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64658,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 13,
+      "theoretical_separator_coverage": {
+        "fraction": 6.139573112702117e-14,
+        "log10_fraction": -13.211861824501014
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44953,
+        44956
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3123447819962166,
+      "stats": {
+        "decisions": 9633,
+        "conflicts": 194,
+        "propagations": 427304,
+        "restarts": 27
+      },
+      "raw_core_literals": [
+        44206,
+        44320,
+        44515,
+        44692,
+        44767,
+        44881,
+        44947,
+        44953,
+        44956
+      ],
+      "raw_core": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        989,
+        990
+      ],
+      "reduced_core_literals": [
+        44692,
+        44767,
+        44881,
+        44947,
+        44953,
+        44956
+      ],
+      "reduced_core": [
+        902,
+        927,
+        965,
+        987,
+        989,
+        990
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 8,
+      "core_minimize_time": 0.45237757096765563,
+      "core_minimize_timeouts": 0,
+      "source": "master:12",
+      "iteration": 14,
+      "separator": [
+        740,
+        778,
+        843,
+        902,
+        927,
+        965,
+        987,
+        989,
+        990
+      ],
+      "raw_safe_region": [
+        48,
+        71
+      ],
+      "canonical_safe_region": [
+        48,
+        71
+      ],
+      "master_solve_time": 0.0011538059916347265,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64659,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 14,
+      "theoretical_separator_coverage": {
+        "fraction": 6.139573112702117e-14,
+        "log10_fraction": -13.211861824501014
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42076,
+        42232,
+        42388,
+        42541,
+        43036,
+        43237,
+        44164,
+        44506,
+        44776
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.0009446830081287771,
+      "stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "raw_core_literals": [
+        42076,
+        42388,
+        43237
+      ],
+      "raw_core": [
+        30,
+        134,
+        417
+      ],
+      "reduced_core_literals": [
+        42076,
+        42388,
+        43237
+      ],
+      "reduced_core": [
+        30,
+        134,
+        417
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 3,
+      "core_minimize_time": 0.008843899006024003,
+      "core_minimize_timeouts": 0,
+      "source": "master:13",
+      "iteration": 15,
+      "separator": [
+        30,
+        82,
+        134,
+        185,
+        350,
+        417,
+        726,
+        840,
+        930
+      ],
+      "raw_safe_region": [
+        991,
+        999
+      ],
+      "canonical_safe_region": [
+        991,
+        999
+      ],
+      "master_solve_time": 0.06481598599930294,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64660,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 15,
+      "theoretical_separator_coverage": {
+        "fraction": 5.055155355759542e-07,
+        "log10_fraction": -6.296265493067571
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        41989,
+        42232,
+        42370,
+        42622,
+        43036,
+        43237,
+        44452,
+        44776,
+        44908
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3377721570141148,
+      "stats": {
+        "decisions": 9367,
+        "conflicts": 105,
+        "propagations": 219219,
+        "restarts": 2
+      },
+      "raw_core_literals": [
+        41989,
+        42232,
+        42370,
+        42622,
+        43237,
+        44452,
+        44776,
+        44908
+      ],
+      "raw_core": [
+        1,
+        82,
+        128,
+        212,
+        417,
+        822,
+        930,
+        974
+      ],
+      "reduced_core_literals": [
+        42622,
+        43237,
+        44452,
+        44776,
+        44908
+      ],
+      "reduced_core": [
+        212,
+        417,
+        822,
+        930,
+        974
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 7,
+      "core_minimize_time": 0.2824593719851691,
+      "core_minimize_timeouts": 0,
+      "source": "master:14",
+      "iteration": 16,
+      "separator": [
+        1,
+        82,
+        128,
+        212,
+        350,
+        417,
+        822,
+        930,
+        974
+      ],
+      "raw_safe_region": [
+        980,
+        999
+      ],
+      "canonical_safe_region": [
+        980,
+        999
+      ],
+      "master_solve_time": 0.06504656799370423,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64661,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 16,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44977,
+        44980
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3019956339849159,
+      "stats": {
+        "decisions": 9533,
+        "conflicts": 174,
+        "propagations": 381385,
+        "restarts": 16
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44977,
+        44980
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        997,
+        998
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44980
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        998
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 12,
+      "core_minimize_time": 0.48132585687562823,
+      "core_minimize_timeouts": 0,
+      "source": "master:15",
+      "iteration": 17,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        997,
+        998
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06790036900201812,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64662,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 17,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44974,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2810862709884532,
+      "stats": {
+        "decisions": 9605,
+        "conflicts": 172,
+        "propagations": 387259,
+        "restarts": 17
+      },
+      "raw_core_literals": [
+        42232,
+        43054,
+        43237,
+        44383,
+        44776,
+        44974,
+        44977
+      ],
+      "raw_core": [
+        82,
+        356,
+        417,
+        799,
+        930,
+        996,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44974
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        996
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 12,
+      "core_minimize_time": 0.5593255749845412,
+      "core_minimize_timeouts": 0,
+      "source": "master:16",
+      "iteration": 18,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        996,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06619178500841372,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64663,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 18,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44971,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2964578650135081,
+      "stats": {
+        "decisions": 9659,
+        "conflicts": 201,
+        "propagations": 484736,
+        "restarts": 25
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44971,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        995,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44971
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        995
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.40236685299896635,
+      "core_minimize_timeouts": 0,
+      "source": "master:17",
+      "iteration": 19,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        995,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06787882599746808,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64664,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 19,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44968,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2909671340021305,
+      "stats": {
+        "decisions": 9682,
+        "conflicts": 201,
+        "propagations": 484011,
+        "restarts": 29
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44968,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        994,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44968
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        994
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.5357173860247713,
+      "core_minimize_timeouts": 0,
+      "source": "master:18",
+      "iteration": 20,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        994,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06783128998358734,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64665,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 20,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44965,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3013392059947364,
+      "stats": {
+        "decisions": 9615,
+        "conflicts": 192,
+        "propagations": 462528,
+        "restarts": 22
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44965,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        993,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44965
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        993
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.4656090160133317,
+      "core_minimize_timeouts": 0,
+      "source": "master:19",
+      "iteration": 21,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        993,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06574639899190515,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64666,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 21,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44962,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.27540638999198563,
+      "stats": {
+        "decisions": 9596,
+        "conflicts": 210,
+        "propagations": 428638,
+        "restarts": 19
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44962,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        992,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44962
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        992
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.5555650710302871,
+      "core_minimize_timeouts": 0,
+      "source": "master:20",
+      "iteration": 22,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        992,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06667429598746821,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64667,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 22,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44959,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.311995380994631,
+      "stats": {
+        "decisions": 9360,
+        "conflicts": 112,
+        "propagations": 219821,
+        "restarts": 0
+      },
+      "raw_core_literals": [
+        42232,
+        43054,
+        43237,
+        44383,
+        44776,
+        44959
+      ],
+      "raw_core": [
+        82,
+        356,
+        417,
+        799,
+        930,
+        991
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44959
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        991
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 6,
+      "core_minimize_time": 0.13164230200345628,
+      "core_minimize_timeouts": 0,
+      "source": "master:21",
+      "iteration": 23,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        991,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06483633298194036,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64668,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 23,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44956,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3040374099800829,
+      "stats": {
+        "decisions": 9716,
+        "conflicts": 220,
+        "propagations": 536855,
+        "restarts": 33
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44956,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        990,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44956,
+        44977
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        990,
+        997
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 8,
+      "core_minimize_time": 0.27651359501760453,
+      "core_minimize_timeouts": 0,
+      "source": "master:22",
+      "iteration": 24,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        990,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.0645968560129404,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64669,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 24,
+      "theoretical_separator_coverage": {
+        "fraction": 6.139573112702117e-14,
+        "log10_fraction": -13.211861824501014
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44953,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2935903559846338,
+      "stats": {
+        "decisions": 9704,
+        "conflicts": 220,
+        "propagations": 544528,
+        "restarts": 31
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44953,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        989,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44953,
+        44977
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        989,
+        997
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 8,
+      "core_minimize_time": 0.27241708399378695,
+      "core_minimize_timeouts": 0,
+      "source": "master:23",
+      "iteration": 25,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        989,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.07519864200730808,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64670,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 25,
+      "theoretical_separator_coverage": {
+        "fraction": 6.139573112702117e-14,
+        "log10_fraction": -13.211861824501014
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44950,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.28297741001006216,
+      "stats": {
+        "decisions": 9566,
+        "conflicts": 176,
+        "propagations": 440108,
+        "restarts": 20
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44950,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        988,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44950
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        988
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.40787049994105473,
+      "core_minimize_timeouts": 0,
+      "source": "master:24",
+      "iteration": 26,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        988,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06479454800137319,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64671,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 26,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44947,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2934762689983472,
+      "stats": {
+        "decisions": 9629,
+        "conflicts": 194,
+        "propagations": 447316,
+        "restarts": 25
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44947,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        987,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44947
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        987
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.45648922998225316,
+      "core_minimize_timeouts": 0,
+      "source": "master:25",
+      "iteration": 27,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        987,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06778146998840384,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64672,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 27,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44944,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.6804435689991806,
+      "stats": {
+        "decisions": 9530,
+        "conflicts": 163,
+        "propagations": 338261,
+        "restarts": 13
+      },
+      "raw_core_literals": [
+        42232,
+        43054,
+        43237,
+        44383,
+        44776,
+        44944
+      ],
+      "raw_core": [
+        82,
+        356,
+        417,
+        799,
+        930,
+        986
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44944
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        986
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 6,
+      "core_minimize_time": 0.15510082704713568,
+      "core_minimize_timeouts": 0,
+      "source": "master:26",
+      "iteration": 28,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        986,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06422516398015432,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64673,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 28,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44941,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2934449640160892,
+      "stats": {
+        "decisions": 9653,
+        "conflicts": 220,
+        "propagations": 485424,
+        "restarts": 32
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44941,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        985,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44941
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        985
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.43074362105107866,
+      "core_minimize_timeouts": 0,
+      "source": "master:27",
+      "iteration": 29,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        985,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06795167599921115,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64674,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 29,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44938,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2930171499901917,
+      "stats": {
+        "decisions": 9633,
+        "conflicts": 188,
+        "propagations": 455994,
+        "restarts": 21
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44938,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        984,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44938,
+        44977
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        984,
+        997
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 8,
+      "core_minimize_time": 0.39209645401570015,
+      "core_minimize_timeouts": 0,
+      "source": "master:28",
+      "iteration": 30,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        984,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06460694398265332,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64675,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 30,
+      "theoretical_separator_coverage": {
+        "fraction": 6.139573112702117e-14,
+        "log10_fraction": -13.211861824501014
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44935,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3096570299821906,
+      "stats": {
+        "decisions": 9823,
+        "conflicts": 275,
+        "propagations": 669265,
+        "restarts": 41
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44935,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        983,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44935
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        983
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.46780692390166223,
+      "core_minimize_timeouts": 0,
+      "source": "master:29",
+      "iteration": 31,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        983,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06694846000755206,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64676,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 31,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44932,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.7180158639966976,
+      "stats": {
+        "decisions": 9464,
+        "conflicts": 149,
+        "propagations": 336615,
+        "restarts": 10
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44932
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        982
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44932
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        982
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 7,
+      "core_minimize_time": 0.37240454796119593,
+      "core_minimize_timeouts": 0,
+      "source": "master:30",
+      "iteration": 32,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        982,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06677610499900766,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64677,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 32,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44929,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3003394989937078,
+      "stats": {
+        "decisions": 9660,
+        "conflicts": 210,
+        "propagations": 477016,
+        "restarts": 27
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44929,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        981,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44929
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        981
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.5100380329822656,
+      "core_minimize_timeouts": 0,
+      "source": "master:31",
+      "iteration": 33,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        981,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06534632897819392,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64678,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 33,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44926,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2999895600078162,
+      "stats": {
+        "decisions": 9551,
+        "conflicts": 183,
+        "propagations": 410656,
+        "restarts": 21
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44926,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        980,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44926
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        980
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.45141918407171033,
+      "core_minimize_timeouts": 0,
+      "source": "master:32",
+      "iteration": 34,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        980,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06697409000480548,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64679,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 34,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44923,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2700409259996377,
+      "stats": {
+        "decisions": 9498,
+        "conflicts": 175,
+        "propagations": 387428,
+        "restarts": 13
+      },
+      "raw_core_literals": [
+        42232,
+        43054,
+        43237,
+        44383,
+        44776,
+        44923,
+        44977
+      ],
+      "raw_core": [
+        82,
+        356,
+        417,
+        799,
+        930,
+        979,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44923
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        979
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 12,
+      "core_minimize_time": 0.5322278379753698,
+      "core_minimize_timeouts": 0,
+      "source": "master:33",
+      "iteration": 35,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        979,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06674862399813719,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64680,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 35,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44917,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2955213940003887,
+      "stats": {
+        "decisions": 9694,
+        "conflicts": 206,
+        "propagations": 503701,
+        "restarts": 25
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44917,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        977,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44917,
+        44977
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        977,
+        997
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 8,
+      "core_minimize_time": 0.4911618600599468,
+      "core_minimize_timeouts": 0,
+      "source": "master:34",
+      "iteration": 36,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        977,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06361607898725197,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64681,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 36,
+      "theoretical_separator_coverage": {
+        "fraction": 6.139573112702117e-14,
+        "log10_fraction": -13.211861824501014
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44914,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.27730650900048204,
+      "stats": {
+        "decisions": 9510,
+        "conflicts": 174,
+        "propagations": 405996,
+        "restarts": 18
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44914,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        976,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44914
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        976
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.3656744110630825,
+      "core_minimize_timeouts": 0,
+      "source": "master:35",
+      "iteration": 37,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        976,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06857589300489053,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64682,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 37,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44911,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.28219499401166104,
+      "stats": {
+        "decisions": 9579,
+        "conflicts": 203,
+        "propagations": 479049,
+        "restarts": 22
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44911,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        975,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44911
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        975
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.4671555319800973,
+      "core_minimize_timeouts": 0,
+      "source": "master:36",
+      "iteration": 38,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        975,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06582409000839107,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64683,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 38,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44908,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.31233276100829244,
+      "stats": {
+        "decisions": 9780,
+        "conflicts": 258,
+        "propagations": 576628,
+        "restarts": 36
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44908,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        974,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44908
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        974
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.6885502769728191,
+      "core_minimize_timeouts": 0,
+      "source": "master:37",
+      "iteration": 39,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        974,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.07073168500210159,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64684,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 39,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44905,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2847165660059545,
+      "stats": {
+        "decisions": 9641,
+        "conflicts": 217,
+        "propagations": 490006,
+        "restarts": 27
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44905,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        973,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44905
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        973
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.4456013150338549,
+      "core_minimize_timeouts": 0,
+      "source": "master:38",
+      "iteration": 40,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        973,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06751763998181559,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64685,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 40,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44902,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.34507745000883006,
+      "stats": {
+        "decisions": 9435,
+        "conflicts": 133,
+        "propagations": 292194,
+        "restarts": 10
+      },
+      "raw_core_literals": [
+        42232,
+        43054,
+        43237,
+        44383,
+        44776,
+        44902,
+        44977
+      ],
+      "raw_core": [
+        82,
+        356,
+        417,
+        799,
+        930,
+        972,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44902
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        972
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 12,
+      "core_minimize_time": 0.5131874589424115,
+      "core_minimize_timeouts": 0,
+      "source": "master:39",
+      "iteration": 41,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        972,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06636937498115003,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64686,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 41,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44899,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.6875147030223161,
+      "stats": {
+        "decisions": 9504,
+        "conflicts": 163,
+        "propagations": 340243,
+        "restarts": 13
+      },
+      "raw_core_literals": [
+        42232,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44899
+      ],
+      "raw_core": [
+        82,
+        350,
+        356,
+        417,
+        799,
+        930,
+        971
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44899
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        971
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 7,
+      "core_minimize_time": 0.441374166024616,
+      "core_minimize_timeouts": 0,
+      "source": "master:40",
+      "iteration": 42,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        971,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06546058598905802,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64687,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 42,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44896,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.6948398429958615,
+      "stats": {
+        "decisions": 9382,
+        "conflicts": 116,
+        "propagations": 247483,
+        "restarts": 2
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44896,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        970,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44896
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        970
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.788041478022933,
+      "core_minimize_timeouts": 0,
+      "source": "master:41",
+      "iteration": 43,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        970,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.0661976319970563,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64688,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 43,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44893,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2966094419825822,
+      "stats": {
+        "decisions": 9622,
+        "conflicts": 214,
+        "propagations": 482934,
+        "restarts": 25
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44893,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        969,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44893
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        969
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.5005369399732444,
+      "core_minimize_timeouts": 0,
+      "source": "master:42",
+      "iteration": 44,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        969,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06517581301159225,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64689,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 44,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44890,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.293399469985161,
+      "stats": {
+        "decisions": 9542,
+        "conflicts": 183,
+        "propagations": 432556,
+        "restarts": 19
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44890,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        968,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44890
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        968
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.4315361319750082,
+      "core_minimize_timeouts": 0,
+      "source": "master:43",
+      "iteration": 45,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        968,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06733486399753019,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64690,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 45,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44887,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2914679560053628,
+      "stats": {
+        "decisions": 9738,
+        "conflicts": 242,
+        "propagations": 547942,
+        "restarts": 32
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44887,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        967,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44887
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        967
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.538440785050625,
+      "core_minimize_timeouts": 0,
+      "source": "master:44",
+      "iteration": 46,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        967,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06812009599525481,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64691,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 46,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44884,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3183490230003372,
+      "stats": {
+        "decisions": 9403,
+        "conflicts": 131,
+        "propagations": 241070,
+        "restarts": 1
+      },
+      "raw_core_literals": [
+        42232,
+        43054,
+        43237,
+        44383,
+        44776,
+        44884
+      ],
+      "raw_core": [
+        82,
+        356,
+        417,
+        799,
+        930,
+        966
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44884
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        966
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 6,
+      "core_minimize_time": 0.07458767096977681,
+      "core_minimize_timeouts": 0,
+      "source": "master:45",
+      "iteration": 47,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        966,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.07012267198297195,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64692,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 47,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44881,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.31991866198950447,
+      "stats": {
+        "decisions": 9789,
+        "conflicts": 249,
+        "propagations": 603463,
+        "restarts": 35
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44881,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        965,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44881
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        965
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.6780319690005854,
+      "core_minimize_timeouts": 0,
+      "source": "master:46",
+      "iteration": 48,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        965,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06843911297619343,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64693,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 48,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44878,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.33661962900077924,
+      "stats": {
+        "decisions": 9318,
+        "conflicts": 89,
+        "propagations": 187810,
+        "restarts": 0
+      },
+      "raw_core_literals": [
+        42232,
+        43054,
+        43237,
+        44383,
+        44776,
+        44878
+      ],
+      "raw_core": [
+        82,
+        356,
+        417,
+        799,
+        930,
+        964
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44878
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        964
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 6,
+      "core_minimize_time": 0.1223745710158255,
+      "core_minimize_timeouts": 0,
+      "source": "master:47",
+      "iteration": 49,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        964,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06848133099265397,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64694,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 49,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44875,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.7129480980220251,
+      "stats": {
+        "decisions": 9481,
+        "conflicts": 151,
+        "propagations": 354160,
+        "restarts": 15
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44875,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        963,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44875
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        963
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 14,
+      "core_minimize_time": 0.7874145809328184,
+      "core_minimize_timeouts": 0,
+      "source": "master:48",
+      "iteration": 50,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        963,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06697647098917514,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64695,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 50,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44872,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3027218010101933,
+      "stats": {
+        "decisions": 9637,
+        "conflicts": 196,
+        "propagations": 520145,
+        "restarts": 25
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44872,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        962,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44872,
+        44977
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        962,
+        997
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 8,
+      "core_minimize_time": 0.37143507596920244,
+      "core_minimize_timeouts": 0,
+      "source": "master:49",
+      "iteration": 51,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        962,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.0782270299969241,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64696,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 51,
+      "theoretical_separator_coverage": {
+        "fraction": 6.139573112702117e-14,
+        "log10_fraction": -13.211861824501014
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44869,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.28006039999308996,
+      "stats": {
+        "decisions": 9620,
+        "conflicts": 181,
+        "propagations": 404455,
+        "restarts": 21
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44869,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        961,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44869
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        961
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.6116681330022402,
+      "core_minimize_timeouts": 0,
+      "source": "master:50",
+      "iteration": 52,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        961,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.0662095709994901,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64697,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 52,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44866,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.29340844598482363,
+      "stats": {
+        "decisions": 9688,
+        "conflicts": 233,
+        "propagations": 509924,
+        "restarts": 28
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44866,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        960,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44866
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        960
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.6183583180827554,
+      "core_minimize_timeouts": 0,
+      "source": "master:51",
+      "iteration": 53,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        960,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06659664798644371,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64698,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 53,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44863,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.308458145998884,
+      "stats": {
+        "decisions": 9607,
+        "conflicts": 188,
+        "propagations": 446979,
+        "restarts": 22
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44863,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        959,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44863
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        959
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.4155364819744136,
+      "core_minimize_timeouts": 0,
+      "source": "master:52",
+      "iteration": 54,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        959,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.0665654570038896,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64699,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 54,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44860,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2978590959974099,
+      "stats": {
+        "decisions": 9329,
+        "conflicts": 90,
+        "propagations": 174017,
+        "restarts": 0
+      },
+      "raw_core_literals": [
+        42232,
+        43054,
+        43237,
+        44383,
+        44776,
+        44860
+      ],
+      "raw_core": [
+        82,
+        356,
+        417,
+        799,
+        930,
+        958
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44860
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        958
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 6,
+      "core_minimize_time": 0.12230887802434154,
+      "core_minimize_timeouts": 0,
+      "source": "master:53",
+      "iteration": 55,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        958,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06843764398945495,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64700,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 55,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44857,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.31786058997386135,
+      "stats": {
+        "decisions": 9798,
+        "conflicts": 267,
+        "propagations": 667167,
+        "restarts": 38
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44857,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        957,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44857,
+        44977
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        957,
+        997
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 8,
+      "core_minimize_time": 0.3293190999829676,
+      "core_minimize_timeouts": 0,
+      "source": "master:54",
+      "iteration": 56,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        957,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06896583901834674,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64701,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 56,
+      "theoretical_separator_coverage": {
+        "fraction": 6.139573112702117e-14,
+        "log10_fraction": -13.211861824501014
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44854,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.7395667090022471,
+      "stats": {
+        "decisions": 9516,
+        "conflicts": 139,
+        "propagations": 306513,
+        "restarts": 14
+      },
+      "raw_core_literals": [
+        42232,
+        43054,
+        43237,
+        44383,
+        44776,
+        44854,
+        44977
+      ],
+      "raw_core": [
+        82,
+        356,
+        417,
+        799,
+        930,
+        956,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44854
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        956
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 12,
+      "core_minimize_time": 1.0697294299316127,
+      "core_minimize_timeouts": 0,
+      "source": "master:55",
+      "iteration": 57,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        956,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.07026095798937604,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64702,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 57,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44851,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.7435557039862033,
+      "stats": {
+        "decisions": 9546,
+        "conflicts": 156,
+        "propagations": 352322,
+        "restarts": 18
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44851,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        955,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44851
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        955
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.5372639480046928,
+      "core_minimize_timeouts": 0,
+      "source": "master:56",
+      "iteration": 58,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        955,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06687108799815178,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64703,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 58,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44848,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.7582941720029339,
+      "stats": {
+        "decisions": 9454,
+        "conflicts": 153,
+        "propagations": 328019,
+        "restarts": 5
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44848,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        954,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44848
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        954
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 7,
+      "core_minimize_time": 0.521079827012727,
+      "core_minimize_timeouts": 0,
+      "source": "master:57",
+      "iteration": 59,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        954,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06790882197674364,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64704,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 59,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44845,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3403198710002471,
+      "stats": {
+        "decisions": 9676,
+        "conflicts": 231,
+        "propagations": 553082,
+        "restarts": 27
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44845,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        953,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44845,
+        44977
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        953,
+        997
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 8,
+      "core_minimize_time": 0.37827492397627793,
+      "core_minimize_timeouts": 0,
+      "source": "master:58",
+      "iteration": 60,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        953,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06987571401987225,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64705,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 60,
+      "theoretical_separator_coverage": {
+        "fraction": 6.139573112702117e-14,
+        "log10_fraction": -13.211861824501014
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44842,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.30664663200150244,
+      "stats": {
+        "decisions": 9680,
+        "conflicts": 214,
+        "propagations": 523582,
+        "restarts": 27
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44842,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        952,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44842
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        952
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.5873142819909845,
+      "core_minimize_timeouts": 0,
+      "source": "master:59",
+      "iteration": 61,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        952,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06564620099379681,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64706,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 61,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44839,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.3030352750211023,
+      "stats": {
+        "decisions": 9391,
+        "conflicts": 122,
+        "propagations": 240218,
+        "restarts": 2
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44839,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        951,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44839
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        951
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.23625367507338524,
+      "core_minimize_timeouts": 0,
+      "source": "master:60",
+      "iteration": 62,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        951,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06890501000452787,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64707,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 62,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44836,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.2976784580096137,
+      "stats": {
+        "decisions": 9531,
+        "conflicts": 178,
+        "propagations": 434832,
+        "restarts": 19
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44836,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        950,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44836
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        950
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.48490366191254,
+      "core_minimize_timeouts": 0,
+      "source": "master:61",
+      "iteration": 63,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        950,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.0695203029899858,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64708,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 63,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44833,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.31580030999612063,
+      "stats": {
+        "decisions": 9690,
+        "conflicts": 229,
+        "propagations": 593905,
+        "restarts": 31
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44833,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        949,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44833
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        949
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.46261350793065503,
+      "core_minimize_timeouts": 0,
+      "source": "master:62",
+      "iteration": 64,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        949,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06872707197908312,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64709,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 64,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44830,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.29641579897725023,
+      "stats": {
+        "decisions": 9615,
+        "conflicts": 215,
+        "propagations": 478077,
+        "restarts": 21
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44830,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        948,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44830
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        948
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.5364589629753027,
+      "core_minimize_timeouts": 0,
+      "source": "master:63",
+      "iteration": 65,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        948,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06961572199361399,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64710,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 65,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    },
+    {
+      "variables": 46983,
+      "clauses": 179960,
+      "assumption_count": 9,
+      "assumptions": [
+        42232,
+        42883,
+        43036,
+        43054,
+        43237,
+        44383,
+        44776,
+        44827,
+        44977
+      ],
+      "objective_variables": 0,
+      "objective_clauses": 0,
+      "result": "UNSAT",
+      "solve_time": 0.731485115014948,
+      "stats": {
+        "decisions": 9502,
+        "conflicts": 155,
+        "propagations": 367199,
+        "restarts": 15
+      },
+      "raw_core_literals": [
+        42232,
+        42883,
+        43054,
+        43237,
+        44383,
+        44776,
+        44827,
+        44977
+      ],
+      "raw_core": [
+        82,
+        299,
+        356,
+        417,
+        799,
+        930,
+        947,
+        997
+      ],
+      "reduced_core_literals": [
+        43054,
+        43237,
+        44383,
+        44776,
+        44827
+      ],
+      "reduced_core": [
+        356,
+        417,
+        799,
+        930,
+        947
+      ],
+      "subset_minimal": true,
+      "core_minimize_calls": 13,
+      "core_minimize_time": 0.9615762369357981,
+      "core_minimize_timeouts": 0,
+      "source": "master:64",
+      "iteration": 66,
+      "separator": [
+        82,
+        299,
+        350,
+        356,
+        417,
+        799,
+        930,
+        947,
+        997
+      ],
+      "raw_safe_region": [
+        978,
+        999
+      ],
+      "canonical_safe_region": [
+        978,
+        999
+      ],
+      "master_solve_time": 0.06729908799752593,
+      "master_stats": {
+        "decisions": 0,
+        "conflicts": 0,
+        "propagations": 0,
+        "restarts": 0
+      },
+      "retry": false,
+      "master_clauses": 64711,
+      "cut_added": true,
+      "cut_status": "added",
+      "cuts_total": 66,
+      "theoretical_separator_coverage": {
+        "fraction": 1.5272188117838388e-11,
+        "log10_fraction": -10.816098735083482
+      }
+    }
+  ],
+  "result": "ITERATION_LIMIT",
+  "master_encoding": {
+    "semantic_variables": 2000,
+    "auxiliary_variables": 15203,
+    "variables": 17203,
+    "base_clauses": 64646,
+    "clauses": 64712,
+    "assumptions": [
+      -6240,
+      15204,
+      17203
+    ]
+  },
+  "elapsed": 75.87348772599944,
+  "summary": {
+    "iterations": 66,
+    "temporal_sat": 0,
+    "temporal_unsat": 66,
+    "temporal_timeout": 0,
+    "cuts_added": 66,
+    "cut_status": [
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active",
+      "active"
+    ],
+    "raw_core_histogram": {
+      "3": 1,
+      "6": 5,
+      "7": 7,
+      "8": 44,
+      "9": 9
+    },
+    "reduced_core_histogram": {
+      "3": 1,
+      "5": 54,
+      "6": 11
+    },
+    "mean_raw_core_size": 7.803030303030303,
+    "mean_reduced_core_size": 5.136363636363637,
+    "median_raw_core_size": 8.0,
+    "median_reduced_core_size": 5.0,
+    "mean_reduction_ratio": 0.6666666666666666,
+    "master_clauses": 64712
+  },
+  "cut_sets": [
+    [
+      202,
+      636,
+      651,
+      713,
+      717
+    ],
+    [
+      882,
+      885,
+      893,
+      895,
+      962,
+      963
+    ],
+    [
+      927,
+      965,
+      987,
+      998,
+      999
+    ],
+    [
+      902,
+      927,
+      965,
+      987,
+      999
+    ],
+    [
+      902,
+      927,
+      965,
+      987,
+      998
+    ],
+    [
+      902,
+      927,
+      965,
+      987,
+      996
+    ],
+    [
+      902,
+      927,
+      965,
+      987,
+      995
+    ],
+    [
+      902,
+      927,
+      965,
+      987,
+      994
+    ],
+    [
+      902,
+      927,
+      965,
+      987,
+      993
+    ],
+    [
+      902,
+      927,
+      965,
+      987,
+      992
+    ],
+    [
+      902,
+      927,
+      965,
+      987,
+      991
+    ],
+    [
+      902,
+      927,
+      965,
+      987,
+      990,
+      997
+    ],
+    [
+      902,
+      927,
+      965,
+      987,
+      989,
+      997
+    ],
+    [
+      902,
+      927,
+      965,
+      987,
+      989,
+      990
+    ],
+    [
+      30,
+      134,
+      417
+    ],
+    [
+      212,
+      417,
+      822,
+      930,
+      974
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      998
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      996
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      995
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      994
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      993
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      992
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      991
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      990,
+      997
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      989,
+      997
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      988
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      987
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      986
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      985
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      984,
+      997
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      983
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      982
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      981
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      980
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      979
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      977,
+      997
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      976
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      975
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      974
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      973
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      972
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      971
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      970
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      969
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      968
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      967
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      966
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      965
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      964
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      963
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      962,
+      997
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      961
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      960
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      959
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      958
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      957,
+      997
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      956
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      955
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      954
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      953,
+      997
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      952
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      951
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      950
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      949
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      948
+    ],
+    [
+      356,
+      417,
+      799,
+      930,
+      947
+    ]
+  ]
+}
