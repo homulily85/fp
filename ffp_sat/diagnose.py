@@ -26,6 +26,7 @@ from .separator_benders import run_separator_benders_pilot, write_benders_output
 from .simulator import simulate
 from .static_dynamic_bridge import run_static_dynamic_bridge, write_bridge_outputs
 from .static_separator import run_static_separator_experiment, write_static_outputs
+from .stratified_benders import run_stratified_separator_benders, write_stratified_outputs
 
 
 def positive_int(value):
@@ -1777,6 +1778,24 @@ def main(argv=None):
     benders.add_argument("--seed-witness", type=Path, action="append", default=[])
     benders.add_argument("--solver", default="cadical300")
     benders.add_argument("--out-dir", type=Path)
+    stratified = subparsers.add_parser(
+        "stratified-separator-benders",
+        help="Run separator Benders from maximum static safe-region size downward",
+    )
+    stratified.add_argument("instance", type=Path)
+    stratified.add_argument("--firefighters", type=positive_int, required=True)
+    stratified.add_argument("--T", type=positive_int, required=True)
+    stratified.add_argument("--K", type=nonnegative_int, required=True)
+    stratified.add_argument("--max-iterations-per-level", type=positive_int, default=256)
+    stratified.add_argument("--subproblem-time", type=positive_float, default=10.0)
+    stratified.add_argument("--subproblem-retry-time", type=positive_float, default=60.0)
+    stratified.add_argument(
+        "--core-minimize-soft-limit", type=positive_float, default=2.0,
+    )
+    stratified.add_argument("--static-search-soft-limit", type=positive_float, default=30.0)
+    stratified.add_argument("--total-time", type=positive_float, default=1800.0)
+    stratified.add_argument("--solver", default="cadical300")
+    stratified.add_argument("--out-dir", type=Path)
     canonical_target = subparsers.add_parser(
         "canonical-target",
         help="Solve an exact objective target using full action rounds and untouched witnesses",
@@ -1860,6 +1879,44 @@ def main(argv=None):
             flush=True,
         )
         return int(report.get("result") in {"ERROR", "INVALID_TEMPORAL_CORE", "MASTER_MODEL_VALIDATION_FAILED"})
+    if args.experiment == "stratified-separator-benders":
+        if args.firefighters != 1:
+            parser.error("stratified-separator-benders currently supports only --firefighters 1")
+        if args.K > instance.n:
+            parser.error("--K must not exceed the number of vertices")
+        try:
+            report = run_stratified_separator_benders(
+                args.instance,
+                args.firefighters,
+                args.T,
+                args.K,
+                args.solver,
+                args.max_iterations_per_level,
+                args.subproblem_time,
+                args.subproblem_retry_time,
+                args.core_minimize_soft_limit,
+                args.static_search_soft_limit,
+                args.total_time,
+            )
+        except (OSError, ValueError, TypeError, RuntimeError, AssertionError) as exc:
+            parser.error(f"Stratified separator Benders failed: {exc}")
+        out_dir = args.out_dir or Path("diagnostics")
+        json_path, static_csv, candidates_csv = write_stratified_outputs(report, out_dir)
+        if report.get("solution"):
+            (out_dir / "stratified_separator_benders_solution.json").write_text(
+                json.dumps(report["solution"], indent=2) + "\n", encoding="utf-8"
+            )
+        print(
+            f"Stratified Benders: {report['result']}\n"
+            f"q_max: {report.get('static_search', {}).get('q_max')}\n"
+            f"Levels: {[(row['q'], row['status']) for row in report.get('levels', [])]}\n"
+            f"JSON: {json_path}\nStatic CSV: {static_csv}\nCandidates CSV: {candidates_csv}",
+            flush=True,
+        )
+        return int(report.get("result") in {
+            "INVALID_TEMPORAL_CORE", "STATIC_MASTER_MODEL_VALIDATION_FAILED",
+            "STRATIFICATION_INVARIANT_FAILED", "DUPLICATE_SEPARATOR_AFTER_CUT",
+        })
     if args.experiment == "prefix-core-mining":
         if any(bound <= args.K or bound > instance.n for bound in (args.replay_bounds or [])):
             parser.error("Every replay bound must be greater than --K and at most n")
